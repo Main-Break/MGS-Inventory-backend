@@ -1,0 +1,50 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# === Ambientes virtuais ===
+.venv/
+venv/
+env/
+
+# === Segredos e config local (NUNCA versionar) ===
+.env
+.env.*
+!.env.example
+
+# === Banco de dados local ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === Uploads / evidências / dados ===
+uploads/
+media/
+data/
+datasets/
+
+# === Modelos e pesos (usar release/LFS, não o repo) ===
+models/
+*.pt
+*.onnx
+*.tflite
+runs/            # saídas de treino do Ultralytics
+
+# === Ferramentas / testes ===
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# === IDE ===
+.idea/
+.vscode/
+
+# === Sistema operacional ===
+.DS_Store
+Thumbs.db
