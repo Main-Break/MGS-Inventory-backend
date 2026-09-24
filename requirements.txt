@@ -1,0 +1,13 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-dotenv>=1.0
+pyjwt>=2.9
+python-multipart>=0.0.12
+
+# Só quando o banco for MySQL/MariaDB (DB_TYPE diferente de SQLITE).
+pymysql>=1.1
+
+# Detecção nas fotos. É pesado (traz o PyTorch junto), instale quando for
+# usar a contagem de verdade. Sem ele a API sobe normal e só a rota de
+# verificação responde 503.
+ultralytics>=8.3
