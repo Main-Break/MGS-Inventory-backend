@@ -1,50 +1,18 @@
-# === Python ===
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-
-# === Ambientes virtuais ===
 .venv/
-venv/
-env/
-
-# === Segredos e config local (NUNCA versionar) ===
+__pycache__/
+*.pyc
 .env
-.env.*
-!.env.example
-
-# === Banco de dados local ===
 *.db
-*.sqlite
-*.sqlite3
+uploads/*
+!uploads/.gitkeep
+modelos/*.pt
+!modelos/.gitkeep
 
-# === Uploads / evidências / dados ===
-uploads/
-media/
-data/
-datasets/
+# versão anterior (mais complexa) do backend, fica só local como referência -
+# o código dela está preservado na branch feat/auth-upload-contagem-itens
+app/
+yolov8n.pt
 
-# === Modelos e pesos (usar release/LFS, não o repo) ===
-models/
-*.pt
-*.onnx
-*.tflite
-runs/            # saídas de treino do Ultralytics
-
-# === Ferramentas / testes ===
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# === IDE ===
 .idea/
 .vscode/
-
-# === Sistema operacional ===
 .DS_Store
-Thumbs.db

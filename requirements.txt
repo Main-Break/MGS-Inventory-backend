@@ -1,0 +1,9 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-dotenv>=1.0
+pyjwt>=2.9
+python-multipart>=0.0.12
+
+# Contagem por foto. Pesado (traz o PyTorch junto), só instale quando for
+# usar de verdade. Sem ele a API sobe normal e só /verifications responde 503.
+ultralytics>=8.3

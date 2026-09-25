@@ -1,72 +1,73 @@
 # mgs-inventario-backend
 
-API em **Python / FastAPI** do projeto de **inventário de estoque por foto** da MGS Plásticos de Engenharia.
-Recebe as contagens sincronizadas pelo app, faz o **batimento por peso** contra o ERP (contagem × peso unitário vs. kg registrados),
-gerencia a fila de divergências e o import/export por planilha.
+API em Python/FastAPI do projeto de inventário de estoque por foto da MGS
+Plásticos de Engenharia: o funcionário fotografa as peças, um modelo de IA
+(YOLO) conta, e fica registrado quem contou o quê.
 
 Parte de um projeto acadêmico com 7 engenheiros. App em: `mgs-inventario-mobile`.
 
-## Stack
+> Esta branch (`simplificacao-api`) é uma reescrita enxuta da versão anterior
+> do backend (preservada na branch `feat/auth-upload-contagem-itens`): sem
+> ORM, sem fila de treino via Celery, sem sistema de anotação de imagens e
+> sem migração versionada - só o essencial pra API funcionar, fácil de ler e
+> de mexer. O que ficou de fora dessa versão em relação à anterior:
+> anotação/retreino do modelo pela API, recontagem manual, múltiplas fotos
+> por verificação, suporte a MySQL/MariaDB. Se o time precisar de algo disso
+> de volta, dá pra resgatar da outra branch.
 
-- **Python 3.11+** + **FastAPI**
-- **SQLAlchemy** + **Alembic** (ORM e migrations)
-- **Pydantic** (schemas)
-- **Ultralytics (YOLOv8/v11)** — treino e inferência de fallback no servidor
-- **OpenCV** — processamento de imagem
-- **openpyxl / pandas** — import/export de planilha
-
-## Escopo do MVP
-
-- Import da planilha do ERP (código, descrição, peso unitário, saldo em kg)
-- Endpoint de detecção (fallback quando o celular não roda on-device)
-- Batimento por peso com tolerância por SKU + fila de divergências
-- Export dos registros para planilha (formato de batimento com o ERP)
-- Endpoint de sincronização do lote offline com idempotência
-
-Fora do MVP: soma de seções (stitching), integração direta com o BrERP, painel web.
-
-## Como rodar
+## Rodar
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-
-cp .env.example .env               # ajuste as variáveis
-alembic upgrade head               # cria as tabelas
-uvicorn app.main:app --reload      # sobe em http://localhost:8000
+cp .env.example .env   # defina ADMIN_PASSWORD e JWT_SECRET
+python main.py         # http://localhost:8000/docs
 ```
 
-Documentação interativa da API: `http://localhost:8000/docs`
+As tabelas são criadas sozinhas na primeira subida, junto com um gestor
+(`ADMIN_EMAIL`/`ADMIN_PASSWORD` do `.env`).
 
-## Estrutura (referência)
+## Rotas
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `POST /auth/login` | qualquer um | e-mail+senha → token JWT |
+| `POST /users` | gestor | cadastra usuário |
+| `GET /users` | gestor | lista usuários |
+| `GET /users/me` `PUT /users/me` | logado | vê/edita os próprios dados |
+| `PATCH /users/{id}/active` | gestor | ativa/desativa acesso |
+| `POST /items` | gestor | cadastra item do catálogo |
+| `GET /items?q=` `GET /items/{id}` | logado | busca/vê item |
+| `POST /verifications` | logado | envia uma foto (`file`, `item_id` opcional), recebe a contagem da IA |
+| `GET /verifications` `GET /verifications/{id}` | logado | funcionário vê as próprias, gestor vê todas |
+| `PATCH /verifications/{id}/approve` | gestor | aprova/reprova |
+
+Todas as rotas, fora login e `/health`, pedem `Authorization: Bearer <token>`.
+
+## Modelo de IA
+
+Coloque o `.pt` treinado em `MODEL_PATH` (padrão `modelos/producao.pt`). Sem
+ele, `POST /verifications` responde 503. O dataset e os pesos treinados da
+versão anterior continuam na pasta `app/neural/` (fora do git, local); para
+treinar um modelo novo a partir de um `dataset.yaml`:
+
+```bash
+python treinar.py caminho/do/dataset.yaml
+```
+
+## Arquivos
 
 ```
-app/
-├── main.py               # app FastAPI + middlewares
-├── models.py             # ORM (SQLAlchemy) + schemas (Pydantic)
-├── database.py           # sessão/conexão
-├── routes/
-│   ├── detection.py      # POST /detect (YOLO)
-│   ├── sync.py           # recebe lote offline do app
-│   └── inventory.py      # registros, divergências, export
-└── services/
-    ├── validation.py     # batimento por peso
-    └── spreadsheet.py    # import/export planilha
-alembic/                  # migrations
+main.py       app FastAPI, todas as rotas
+config.py     lê o .env
+database.py   conexão SQLite + criação das tabelas no start
+security.py   senha, token JWT, quem pode fazer o quê
+ai.py         roda o modelo na foto
+models.py     formatos de entrada/saída
+treinar.py    script de treino, rodado na mão
+database.sql  schema completo, só para consulta
 ```
 
-## Variáveis de ambiente (`.env`)
-
-```
-DATABASE_URL=sqlite:///./inventario.db
-MODEL_PATH=./models/yolo-bastoes.pt
-UPLOAD_DIR=./uploads
-```
-
-## Convenções
-
-- Branches: `feat/...`, `fix/...`, `chore/...`
-- Formatação com `black` + `ruff`; PR com 1 revisão antes do merge em `main`
-
-> Plano de sprints e critérios de aceite do MVP: ver documento do projeto.
+Sem ORM: o SQL fica na rota, escrito à mão, sempre com `?` como parâmetro
+(protege contra SQL injection). Senha guardada com PBKDF2-HMAC-SHA256.
