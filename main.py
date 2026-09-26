@@ -1,7 +1,7 @@
-"""Ponto de entrada da API.
+"""API de inventário por foto: usuário fotografa, o modelo de IA conta os
+itens, e fica registrado quem contou o quê.
 
-Sobe o FastAPI, aplica as migrações do banco antes de atender qualquer
-requisição e registra as rotas.
+Junta as rotas de cada seção (routes/) num app só e sobe o servidor.
 """
 
 from contextlib import asynccontextmanager
@@ -9,26 +9,19 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-import config
-import migrations
-from routes import auth, itens, users, verificacoes
+import core
+from routes import auth, items, users, verifications
+from security import criar_gestor_inicial
 
 
 @asynccontextmanager
 async def ciclo_de_vida(_app: FastAPI):
-    # As tabelas são criadas e atualizadas sozinhas toda vez que o App sobe,
-    # então não existe passo manual de migração no servidor.
-    migrations.aplicar_migracoes()
-    migrations.criar_gestor_inicial()
+    core.criar_tabelas()
+    criar_gestor_inicial()
     yield
 
 
-app = FastAPI(title="Inventário por Foto - API", debug=config.DEBUG, lifespan=ciclo_de_vida)
-
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(itens.router)
-app.include_router(verificacoes.router)
+app = FastAPI(title="Inventário por Foto - API", lifespan=ciclo_de_vida)
 
 
 @app.get("/health", tags=["health"])
@@ -36,10 +29,11 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(items.router)
+app.include_router(verifications.router)
+
+
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=config.HOST,
-        port=config.PORT,
-        reload=config.RELOAD,
-    )
+    uvicorn.run("main:app", host=core.HOST, port=core.PORT, reload=True)

@@ -1,107 +1,54 @@
 # Inventário por Foto - API
 
-API em Python/FastAPI do inventário de estoque por foto: o funcionário
-fotografa as peças, o modelo de rede neural conta, e fica registrado quem
-contou, quanto contou e o quanto a contagem bate com a recontagem manual.
+Funcionário fotografa as peças, o modelo conta, e fica registrado quem
+contou o quê.
 
-## Como funciona, em 4 partes
-
-1. **Usuários**: dois papéis, `gestor` e `funcionario`. Só o gestor cadastra
-   pessoas e controla o acesso.
-2. **Itens**: o catálogo do estoque. O `label` de cada item é o nome exato da
-   classe que o modelo devolve, e é o que liga a foto ao item cadastrado.
-3. **Verificações**: uma ou mais fotos enviadas de uma vez, contadas pelo
-   modelo e somadas por item.
-4. **Modelo**: um arquivo `.pt` do YOLO apontado por `MODEL_PATH`. Treinado
-   fora da API pelo `treinar.py`.
-
-## Como rodar
+## Rodar
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
-cp .env.example .env     # defina pelo menos ADMIN_PASSWORD
-python main.py           # sobe em http://localhost:8000
+cp .env.example .env   # defina ADMIN_PASSWORD e JWT_SECRET
+python main.py         # http://localhost:8000/docs
 ```
 
-As tabelas são criadas sozinhas no start, não existe migração para rodar na
-mão. Na primeira subida, se não houver nenhum gestor no banco, um é criado
-com o `ADMIN_EMAIL`/`ADMIN_PASSWORD` do `.env`. Troque a senha em
-`PATCH /users/me` logo depois do primeiro login.
-
-Documentação interativa: `http://localhost:8000/docs`
+As tabelas são criadas sozinhas na primeira subida, junto com um gestor
+(`ADMIN_EMAIL`/`ADMIN_PASSWORD` do `.env`).
 
 ## Rotas
 
-| Rota | Quem pode | O que faz |
-| --- | --- | --- |
-| `POST /auth/login` | qualquer um | Troca e-mail e senha por um token JWT |
-| `POST /users` | gestor | Cadastra usuário |
-| `GET /users` | gestor | Lista todos |
-| `GET /users/{id}` | gestor | Vê um usuário |
-| `PATCH /users/{id}/active` | gestor | Ativa ou desativa o acesso |
-| `GET /users/me` | logado | Os próprios dados |
-| `PATCH /users/me` | logado | Muda nome, e-mail ou senha |
-| `POST /items` | gestor | Cadastra item |
-| `PATCH /items/{id}` | gestor | Edita item |
-| `GET /items?q=termo` | logado | Busca por nome ou label |
-| `GET /items/{id}` | logado | Vê um item |
-| `POST /verifications` | logado | Envia as fotos e recebe a contagem |
-| `GET /verifications` | logado | Funcionário vê as dele, gestor vê todas |
-| `GET /verifications/{id}` | dono ou gestor | Vê uma verificação |
-| `PATCH /verifications/{id}/manual-count` | dono | Informa a recontagem manual |
-| `PATCH /verifications/{id}/approval` | gestor | Aprova ou reprova |
+Login é `POST /auth/login` (e-mail+senha, devolve token JWT). Tudo o resto
+pede `Authorization: Bearer <token>`, exceto `/health`.
 
-Todas as rotas, fora o login e o `/health`, pedem o cabeçalho
-`Authorization: Bearer <token>`.
+- `POST /users`, `GET /users` - só gestor, cadastra e lista usuário
+- `GET /users/me`, `PUT /users/me` - qualquer logado vê/edita os próprios dados
+- `PATCH /users/{id}/active` - só gestor, ativa/desativa acesso
+- `POST /items` - só gestor, cadastra item do catálogo
+- `GET /items?q=`, `GET /items/{id}` - busca/vê item
+- `POST /verifications` - manda uma foto (`file`, `item_id` opcional), volta a contagem
+- `GET /verifications`, `GET /verifications/{id}` - funcionário vê as próprias, gestor vê tudo
+- `PATCH /verifications/{id}/approve` - só gestor, aprova/reprova
 
-### Enviando fotos
+## Modelo
 
-`POST /verifications` é `multipart/form-data`, com o campo `files` (uma ou
-mais imagens) e, opcionalmente, `expected_item_id` (o item que o funcionário
-selecionou para contar).
+Fica em `MODEL_PATH` (padrão `neural/producao.pt`). Sem esse arquivo,
+`POST /verifications` responde 503. Pra treinar um novo, joga o dataset
+(formato YOLO) em `uploads/train/` e roda `python cli.py`, opção de treino.
 
-A resposta traz, por item contado:
+## Arquivos
 
-- `count`: quantas peças o modelo contou, somando todas as fotos.
-- `ai_confidence_pct`: a confiança média que o próprio modelo reportou.
-- `manual_accuracy_pct`: o quanto a contagem da IA bate com a recontagem
-  manual, preenchido depois que o funcionário informa o `manual_count`.
-- `diverge_do_esperado`: `true` quando apareceu na foto algo diferente do
-  item que o funcionário disse que ia contar.
+- `core.py` - o inicial: lê o `.env`, abre o SQLite, cria as tabelas
+- `main.py` - monta o app e junta as rotas de `routes/`
+- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, treino
+- `security.py` - senha, token, quem pode fazer o quê
+- `models.py` - formato do que entra e sai da API
+- `routes/` - um arquivo por seção (auth, users, items, verifications)
+- `neural/` - roda e treina o modelo
+- `data/` - onde fica o `.db`
+- `uploads/` - fotos enviadas, e `uploads/train/` com dataset de treino
 
-## Modelo de detecção
-
-Coloque o `.pt` treinado no caminho do `MODEL_PATH` (por padrão
-`./modelos/producao.pt`). Enquanto ele não existir, toda a API funciona e só
-`POST /verifications` responde 503 com a mensagem explicando o motivo.
-
-Para treinar, com um dataset em formato YOLO (pastas `images/` e `labels/`
-mais um `dataset.yaml`):
-
-```bash
-python treinar.py caminho/do/dataset.yaml
-```
-
-O treino copia sozinho o melhor peso gerado para o `MODEL_PATH`.
-
-## Estrutura
-
-```
-main.py          sobe a API, roda as migrações e registra as rotas
-config.py        lê o .env
-database.py      conexão com o banco e as 3 operações usadas nas rotas
-migrations.py    cria e atualiza as tabelas sozinho no start
-seguranca.py     hash de senha, token JWT e quem pode fazer o quê
-neural.py        roda o modelo na foto e devolve a contagem
-treinar.py       script de treino, rodado na mão
-database.sql     o schema completo, só para consulta
-models/          o que a API recebe e devolve
-routes/          uma rota por assunto, com o SQL escrito à vista
-```
-
-Sem ORM: todo SQL fica visível na rota, escrito à mão e sempre com
-parâmetros nomeados, que é o que protege contra SQL injection. As senhas são
-guardadas com PBKDF2-HMAC-SHA256.
+SQL é escrito à mão nas rotas, sempre com `?` como parâmetro - nada de
+concatenar valor em string, é isso que evita SQL injection. Sem ORM de
+propósito, pra continuar fácil de mexer direto no banco. Senha guardada
+com PBKDF2-HMAC-SHA256.
