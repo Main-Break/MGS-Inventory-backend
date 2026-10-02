@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import core
 from models.core import Core
@@ -23,6 +24,14 @@ async def ciclo_de_vida(_app: FastAPI):
 
 
 app = FastAPI(title="Inventário por Foto - API", lifespan=ciclo_de_vida)
+
+# Libera o front (outra origem, ex: localhost:5173) pra chamar a API.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[core.FRONTEND_ORIGIN],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health", tags=["health"])
