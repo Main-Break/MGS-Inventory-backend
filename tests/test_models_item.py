@@ -3,41 +3,41 @@
 import pytest
 
 from models.core import Core
-from models.item import Item, LabelJaCadastradoError
+from models.item import Item, LabelAlreadyRegisteredError
 
 
 @pytest.fixture
-def itens(tmp_path) -> Item:
+def items(tmp_path) -> Item:
     db_file = str(tmp_path / "teste.db")
     Core(db_file).migrate()
     return Item(db_file)
 
 
-def test_criar_e_buscar_por_id(itens: Item):
-    criado = itens.criar("parafuso_m6", "Parafuso M6", stock_quantity=10)
+def test_create_and_find_by_id(items: Item):
+    created = items.create("parafuso_m6", "Parafuso M6", stock_quantity=10)
 
-    assert itens.buscar_por_id(criado["id"])["name"] == "Parafuso M6"
-
-
-def test_nao_deixa_duplicar_label(itens: Item):
-    itens.criar("parafuso_m6", "Parafuso M6")
-
-    with pytest.raises(LabelJaCadastradoError):
-        itens.criar("parafuso_m6", "Outro nome")
+    assert items.find_by_id(created["id"])["name"] == "Parafuso M6"
 
 
-def test_buscar_filtra_por_termo(itens: Item):
-    itens.criar("parafuso_m6", "Parafuso M6")
-    itens.criar("porca_m6", "Porca M6")
+def test_does_not_allow_duplicate_label(items: Item):
+    items.create("parafuso_m6", "Parafuso M6")
 
-    resultado = itens.buscar("parafuso")
-
-    assert len(resultado) == 1
-    assert resultado[0]["label"] == "parafuso_m6"
+    with pytest.raises(LabelAlreadyRegisteredError):
+        items.create("parafuso_m6", "Outro nome")
 
 
-def test_buscar_sem_termo_lista_todos(itens: Item):
-    itens.criar("parafuso_m6", "Parafuso M6")
-    itens.criar("porca_m6", "Porca M6")
+def test_search_filters_by_term(items: Item):
+    items.create("parafuso_m6", "Parafuso M6")
+    items.create("porca_m6", "Porca M6")
 
-    assert len(itens.buscar()) == 2
+    result = items.search("parafuso")
+
+    assert len(result) == 1
+    assert result[0]["label"] == "parafuso_m6"
+
+
+def test_search_without_term_lists_all(items: Item):
+    items.create("parafuso_m6", "Parafuso M6")
+    items.create("porca_m6", "Porca M6")
+
+    assert len(items.search()) == 2

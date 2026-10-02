@@ -3,34 +3,33 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import core
-from models.item import Item as ItemModel
-from models.item import LabelJaCadastradoError
-from schemas import Item, ItemCriar
-from security import gestor_logado, usuario_logado
+from models.item import Item, LabelAlreadyRegisteredError
+from schemas import ItemCreate, ItemOut
+from security import current_manager, current_user
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-def _itens() -> ItemModel:
-    return ItemModel(core.DB_FILE)
+def _items() -> Item:
+    return Item(core.DB_FILE)
 
 
-@router.post("", response_model=Item, status_code=status.HTTP_201_CREATED)
-def criar_item(dados: ItemCriar, _gestor: dict = Depends(gestor_logado)) -> dict:
+@router.post("", response_model=ItemOut, status_code=status.HTTP_201_CREATED)
+def create_item(dados: ItemCreate, _manager: dict = Depends(current_manager)) -> dict:
     try:
-        return _itens().criar(dados.label, dados.name, dados.stock_quantity)
-    except LabelJaCadastradoError:
+        return _items().create(dados.label, dados.name, dados.stock_quantity)
+    except LabelAlreadyRegisteredError:
         raise HTTPException(status.HTTP_409_CONFLICT, "Já existe um item com esse label.") from None
 
 
-@router.get("", response_model=list[Item])
-def buscar_itens(q: str | None = None, _usuario: dict = Depends(usuario_logado)) -> list[dict]:
-    return _itens().buscar(q)
+@router.get("", response_model=list[ItemOut])
+def search_items(q: str | None = None, _user: dict = Depends(current_user)) -> list[dict]:
+    return _items().search(q)
 
 
-@router.get("/{item_id}", response_model=Item)
-def obter_item(item_id: int, _usuario: dict = Depends(usuario_logado)) -> dict:
-    item = _itens().buscar_por_id(item_id)
+@router.get("/{item_id}", response_model=ItemOut)
+def get_item(item_id: int, _user: dict = Depends(current_user)) -> dict:
+    item = _items().find_by_id(item_id)
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item não encontrado.")
     return item

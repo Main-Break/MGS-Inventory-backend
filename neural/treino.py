@@ -11,7 +11,7 @@ import core
 EPOCAS = 50
 
 
-def treinar(caminho_dataset: str) -> None:
+def train(caminho_dataset: str) -> None:
     from ultralytics import YOLO
 
     modelo = YOLO("yolo11n.pt")

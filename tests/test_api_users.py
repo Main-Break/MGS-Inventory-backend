@@ -3,27 +3,27 @@
 from fastapi.testclient import TestClient
 
 
-def test_gestor_cria_usuario(client: TestClient, cabecalho_gestor: dict):
+def test_manager_creates_user(client: TestClient, manager_header: dict):
     resposta = client.post(
         "/users",
         json={"name": "Ana", "email": "ana@exemplo.com", "password": "senha1234", "role": "funcionario"},
-        headers=cabecalho_gestor,
+        headers=manager_header,
     )
 
     assert resposta.status_code == 201
     assert resposta.json()["email"] == "ana@exemplo.com"
 
 
-def test_nao_deixa_duplicar_email(client: TestClient, cabecalho_gestor: dict):
+def test_does_not_allow_duplicate_email(client: TestClient, manager_header: dict):
     dados = {"name": "Ana", "email": "ana@exemplo.com", "password": "senha1234", "role": "funcionario"}
-    client.post("/users", json=dados, headers=cabecalho_gestor)
+    client.post("/users", json=dados, headers=manager_header)
 
-    resposta = client.post("/users", json=dados, headers=cabecalho_gestor)
+    resposta = client.post("/users", json=dados, headers=manager_header)
 
     assert resposta.status_code == 409
 
 
-def test_sem_token_nao_cria_usuario(client: TestClient):
+def test_without_token_cannot_create_user(client: TestClient):
     resposta = client.post(
         "/users", json={"name": "Ana", "email": "ana@exemplo.com", "password": "senha1234"}
     )
@@ -31,26 +31,26 @@ def test_sem_token_nao_cria_usuario(client: TestClient):
     assert resposta.status_code == 401
 
 
-def test_funcionario_nao_pode_criar_usuario(client: TestClient, cabecalho_gestor: dict):
+def test_employee_cannot_create_user(client: TestClient, manager_header: dict):
     client.post(
         "/users",
         json={"name": "Ana", "email": "ana@exemplo.com", "password": "senha1234", "role": "funcionario"},
-        headers=cabecalho_gestor,
+        headers=manager_header,
     )
     login = client.post("/auth/login", json={"email": "ana@exemplo.com", "password": "senha1234"})
-    cabecalho_funcionario = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    employee_header = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     resposta = client.post(
         "/users",
         json={"name": "Outro", "email": "outro@exemplo.com", "password": "senha1234"},
-        headers=cabecalho_funcionario,
+        headers=employee_header,
     )
 
     assert resposta.status_code == 403
 
 
-def test_meus_dados_retorna_usuario_logado(client: TestClient, cabecalho_gestor: dict):
-    resposta = client.get("/users/me", headers=cabecalho_gestor)
+def test_my_profile_returns_logged_in_user(client: TestClient, manager_header: dict):
+    resposta = client.get("/users/me", headers=manager_header)
 
     assert resposta.status_code == 200
     assert resposta.json()["role"] == "gestor"

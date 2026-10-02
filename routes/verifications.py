@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 
 import core
 from models.verification import Verification
-from neural.neural import ModeloIndisponivelError, Neural
-from schemas import Deteccao, Verificacao
-from security import gestor_logado, usuario_logado
+from neural.neural import ModelUnavailableError, Neural
+from schemas import Detection, VerificationOut
+from security import current_manager, current_user
 
 router = APIRouter(prefix="/verifications", tags=["verifications"])
 
@@ -19,24 +19,24 @@ _EXTENSOES_VALIDAS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 _neural = Neural(core.MODEL_PATH)
 
 
-def _obter_neural() -> Neural:
+def _get_neural() -> Neural:
     return _neural
 
 
-def _verificacoes() -> Verification:
+def _verifications() -> Verification:
     return Verification(core.DB_FILE)
 
 
-def _montar_verificacao(linha: dict) -> dict:
-    return {**linha, "detections": [Deteccao(**d) for d in json.loads(linha["detections"])]}
+def _build_verification(linha: dict) -> dict:
+    return {**linha, "detections": [Detection(**d) for d in json.loads(linha["detections"])]}
 
 
-@router.post("", response_model=Verificacao, status_code=status.HTTP_201_CREATED)
-def criar_verificacao(
+@router.post("", response_model=VerificationOut, status_code=status.HTTP_201_CREATED)
+def create_verification(
     file: UploadFile = File(...),
     item_id: int | None = Form(default=None),
-    usuario: dict = Depends(usuario_logado),
-    neural: Neural = Depends(_obter_neural),
+    user: dict = Depends(current_user),
+    neural: Neural = Depends(_get_neural),
 ) -> dict:
     extensao = Path(file.filename or "").suffix.lower()
     if extensao not in _EXTENSOES_VALIDAS:
@@ -52,37 +52,39 @@ def criar_verificacao(
     (Path(core.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
 
     try:
-        deteccoes = neural.contar_itens(Path(core.UPLOAD_DIR) / nome_arquivo)
-    except ModeloIndisponivelError as erro:
+        deteccoes = neural.count_items(Path(core.UPLOAD_DIR) / nome_arquivo)
+    except ModelUnavailableError as erro:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(erro)) from erro
 
-    linha = _verificacoes().criar(usuario["id"], item_id, nome_arquivo, json.dumps(deteccoes))
-    return _montar_verificacao(linha)
+    linha = _verifications().create(user["id"], item_id, nome_arquivo, json.dumps(deteccoes))
+    return _build_verification(linha)
 
 
-@router.get("", response_model=list[Verificacao])
-def listar_verificacoes(usuario: dict = Depends(usuario_logado)) -> list[dict]:
-    verificacoes = _verificacoes()
-    if usuario["role"] == "gestor":
-        linhas = verificacoes.listar_todas()
+@router.get("", response_model=list[VerificationOut])
+def list_verifications(user: dict = Depends(current_user)) -> list[dict]:
+    verifications = _verifications()
+    if user["role"] == "gestor":
+        linhas = verifications.list_all()
     else:
-        linhas = verificacoes.listar_por_usuario(usuario["id"])
-    return [_montar_verificacao(linha) for linha in linhas]
+        linhas = verifications.list_by_user(user["id"])
+    return [_build_verification(linha) for linha in linhas]
 
 
-@router.get("/{verificacao_id}", response_model=Verificacao)
-def obter_verificacao(verificacao_id: int, usuario: dict = Depends(usuario_logado)) -> dict:
-    linha = _verificacoes().buscar_por_id(verificacao_id)
+@router.get("/{verification_id}", response_model=VerificationOut)
+def get_verification(verification_id: int, user: dict = Depends(current_user)) -> dict:
+    linha = _verifications().find_by_id(verification_id)
     if linha is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Verificação não encontrada.")
-    if usuario["role"] != "gestor" and linha["user_id"] != usuario["id"]:
+    if user["role"] != "gestor" and linha["user_id"] != user["id"]:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Sem acesso a essa verificação.")
-    return _montar_verificacao(linha)
+    return _build_verification(linha)
 
 
-@router.patch("/{verificacao_id}/approve", response_model=Verificacao)
-def aprovar_verificacao(verificacao_id: int, aprovado: bool, _gestor: dict = Depends(gestor_logado)) -> dict:
-    linha = _verificacoes().aprovar(verificacao_id, aprovado)
+@router.patch("/{verification_id}/approve", response_model=VerificationOut)
+def approve_verification(
+    verification_id: int, aprovado: bool, _manager: dict = Depends(current_manager)
+) -> dict:
+    linha = _verifications().approve(verification_id, aprovado)
     if linha is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Verificação não encontrada.")
-    return _montar_verificacao(linha)
+    return _build_verification(linha)

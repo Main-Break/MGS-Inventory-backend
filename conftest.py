@@ -20,11 +20,11 @@ def client(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def token_gestor(client: TestClient) -> str:
+def manager_token(client: TestClient) -> str:
     resposta = client.post("/auth/login", json={"email": core.ADMIN_EMAIL, "password": core.ADMIN_PASSWORD})
     return resposta.json()["access_token"]
 
 
 @pytest.fixture
-def cabecalho_gestor(token_gestor: str) -> dict:
-    return {"Authorization": f"Bearer {token_gestor}"}
+def manager_header(manager_token: str) -> dict:
+    return {"Authorization": f"Bearer {manager_token}"}

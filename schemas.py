@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Papel = Literal["gestor", "funcionario"]
+Role = Literal["gestor", "funcionario"]
 
 
 class Login(BaseModel):
@@ -18,51 +18,51 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
-class Usuario(BaseModel):
+class UserOut(BaseModel):
     id: int
     name: str
     email: str
-    role: Papel
+    role: Role
     active: bool
 
 
-class UsuarioCriar(BaseModel):
+class UserCreate(BaseModel):
     name: str
     email: str
     password: str = Field(min_length=8)
-    role: Papel = "funcionario"
+    role: Role = "funcionario"
 
 
-class UsuarioAtualizar(BaseModel):
+class UserUpdate(BaseModel):
     name: str
     email: str
     password: str | None = None
 
 
-class Item(BaseModel):
+class ItemOut(BaseModel):
     id: int
     label: str
     name: str
     stock_quantity: int
 
 
-class ItemCriar(BaseModel):
+class ItemCreate(BaseModel):
     label: str = Field(description="Nome exato da classe que o modelo de IA devolve")
     name: str
     stock_quantity: int = 0
 
 
-class Deteccao(BaseModel):
+class Detection(BaseModel):
     label: str
     count: int
     confidence: float
 
 
-class Verificacao(BaseModel):
+class VerificationOut(BaseModel):
     id: int
     user_id: int
     item_id: int | None
     photo_filename: str
-    detections: list[Deteccao]
+    detections: list[Detection]
     approved: bool | None
     created_at: datetime

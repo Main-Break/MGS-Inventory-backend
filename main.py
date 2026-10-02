@@ -13,17 +13,17 @@ from fastapi.middleware.cors import CORSMiddleware
 import core
 from models.core import Core
 from routes import auth, items, users, verifications
-from security import criar_gestor_inicial
+from security import create_initial_manager
 
 
 @asynccontextmanager
-async def ciclo_de_vida(_app: FastAPI):
+async def lifespan(_app: FastAPI):
     Core(core.DB_FILE).migrate()
-    criar_gestor_inicial()
+    create_initial_manager()
     yield
 
 
-app = FastAPI(title="Inventário por Foto - API", lifespan=ciclo_de_vida)
+app = FastAPI(title="Inventário por Foto - API", lifespan=lifespan)
 
 # Libera o front (outra origem, ex: localhost:5173) pra chamar a API.
 app.add_middleware(

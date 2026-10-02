@@ -1,44 +1,44 @@
 """Detecção e contagem de itens numa foto, usando o modelo YOLO treinado.
 
-Enquanto não existir um .pt em MODEL_PATH, contar_itens() levanta
-ModeloIndisponivelError (a rota devolve 503).
+Enquanto não existir um .pt em MODEL_PATH, count_items() levanta
+ModelUnavailableError (a rota devolve 503).
 """
 
 from pathlib import Path
 
 
-class ModeloIndisponivelError(Exception):
+class ModelUnavailableError(Exception):
     pass
 
 
 class Neural:
     def __init__(self, model_path: str):
         self._model_path = model_path
-        self._modelo = None
+        self._model = None
 
-    def _carregar_modelo(self):
-        if self._modelo is None:
+    def _load_model(self):
+        if self._model is None:
             if not Path(self._model_path).is_file():
-                raise ModeloIndisponivelError(
+                raise ModelUnavailableError(
                     f"Modelo de detecção não encontrado em '{self._model_path}'."
                 )
 
             from ultralytics import YOLO  # pesado, só importa se o modelo existir
 
-            self._modelo = YOLO(self._model_path)
+            self._model = YOLO(self._model_path)
 
-        return self._modelo
+        return self._model
 
-    def contar_itens(self, caminho_imagem: Path) -> list[dict]:
-        modelo = self._carregar_modelo()
-        resultado = modelo(source=str(caminho_imagem))[0]
+    def count_items(self, image_path: Path) -> list[dict]:
+        model = self._load_model()
+        result = model(source=str(image_path))[0]
 
-        confiancas_por_classe: dict[str, list[float]] = {}
-        for classe_id, confianca in zip(resultado.boxes.cls.tolist(), resultado.boxes.conf.tolist()):
-            nome_classe = modelo.names[int(classe_id)]
-            confiancas_por_classe.setdefault(nome_classe, []).append(confianca)
+        confidences_by_class: dict[str, list[float]] = {}
+        for class_id, confidence in zip(result.boxes.cls.tolist(), result.boxes.conf.tolist()):
+            class_name = model.names[int(class_id)]
+            confidences_by_class.setdefault(class_name, []).append(confidence)
 
         return [
-            {"label": label, "count": len(confiancas), "confidence": sum(confiancas) / len(confiancas)}
-            for label, confiancas in confiancas_por_classe.items()
+            {"label": label, "count": len(confidences), "confidence": sum(confidences) / len(confidences)}
+            for label, confidences in confidences_by_class.items()
         ]

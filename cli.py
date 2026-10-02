@@ -10,50 +10,50 @@ from pydantic import ValidationError
 import core
 from models.core import Core
 from models.item import Item
-from models.user import EmailJaCadastradoError, User
-from schemas import UsuarioCriar
-from security import criar_gestor_inicial, gerar_hash_senha
+from models.user import EmailAlreadyRegisteredError, User
+from schemas import UserCreate
+from security import create_initial_manager, hash_password
 
 
-def _confirmar(pergunta: str) -> bool:
+def _confirm(pergunta: str) -> bool:
     return input(f"{pergunta} (s/n): ").strip().lower() in ("s", "sim")
 
 
-def _criar_usuario() -> None:
+def _create_user() -> None:
     nome = input("nome: ").strip()
     email = input("e-mail: ").strip().lower()
     senha = input("senha (mínimo 8 caracteres): ").strip()
-    role = "gestor" if _confirmar("é gestor?") else "funcionario"
+    role = "gestor" if _confirm("é gestor?") else "funcionario"
 
     try:
-        dados = UsuarioCriar(name=nome, email=email, password=senha, role=role)
+        dados = UserCreate(name=nome, email=email, password=senha, role=role)
     except ValidationError as erro:
         print("dados inválidos:", erro)
         return
 
     try:
-        usuario = User(core.DB_FILE).criar(dados.name, dados.email, gerar_hash_senha(dados.password), dados.role)
-    except EmailJaCadastradoError:
+        user = User(core.DB_FILE).create(dados.name, dados.email, hash_password(dados.password), dados.role)
+    except EmailAlreadyRegisteredError:
         print(f"já existe um usuário com o e-mail '{dados.email}'.")
         return
-    print(f"usuário criado: id {usuario['id']}, {dados.role}.")
+    print(f"usuário criado: id {user['id']}, {dados.role}.")
 
 
-def _conferir_tabelas() -> None:
+def _check_tables() -> None:
     Core(core.DB_FILE).migrate()
     print("tabelas conferidas/criadas em", core.DB_FILE)
 
 
-def _conferir_gestor() -> None:
-    criar_gestor_inicial()
+def _check_manager() -> None:
+    create_initial_manager()
     print("gestor inicial conferido/criado.")
 
 
-def _itens_cadastrados() -> list[dict]:
-    return Item(core.DB_FILE).buscar()
+def _registered_items() -> list[dict]:
+    return Item(core.DB_FILE).search()
 
 
-def _verificar_treinamento() -> None:
+def _check_training() -> None:
     modelo_existe = Path(core.MODEL_PATH).is_file()
     print(f"modelo em produção ({core.MODEL_PATH}): {'existe' if modelo_existe else 'não existe'}")
 
@@ -65,14 +65,14 @@ def _verificar_treinamento() -> None:
     else:
         print(f"nenhum dataset .yaml encontrado em {core.TRAIN_DIR}")
 
-    itens = _itens_cadastrados()
+    itens = _registered_items()
     print(f"itens cadastrados no catálogo: {len(itens)}")
     for item in itens:
         print(f"  - {item['label']} ({item['name']})")
 
 
-def _treinar_modelo() -> None:
-    itens = _itens_cadastrados()
+def _train_model() -> None:
+    itens = _registered_items()
     if not itens:
         print("nenhum item cadastrado no catálogo ainda. cadastre os itens antes de treinar.")
         return
@@ -86,21 +86,21 @@ def _treinar_modelo() -> None:
         print("cancelado.")
         return
 
-    if not _confirmar(f"confirma o treino com '{caminho}'?"):
+    if not _confirm(f"confirma o treino com '{caminho}'?"):
         print("cancelado.")
         return
 
-    from neural.treino import treinar
+    from neural.treino import train
 
-    treinar(caminho)
+    train(caminho)
 
 
 _OPCOES = {
-    "1": ("Criar usuário", _criar_usuario),
-    "2": ("Conferir/criar gestor inicial", _conferir_gestor),
-    "3": ("Conferir/criar tabelas do banco", _conferir_tabelas),
-    "4": ("Verificar treinamento (modelo, dataset, itens)", _verificar_treinamento),
-    "5": ("Treinar modelo", _treinar_modelo),
+    "1": ("Criar usuário", _create_user),
+    "2": ("Conferir/criar gestor inicial", _check_manager),
+    "3": ("Conferir/criar tabelas do banco", _check_tables),
+    "4": ("Verificar treinamento (modelo, dataset, itens)", _check_training),
+    "5": ("Treinar modelo", _train_model),
 }
 
 

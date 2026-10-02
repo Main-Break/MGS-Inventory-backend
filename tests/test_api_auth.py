@@ -4,7 +4,7 @@ import core
 from fastapi.testclient import TestClient
 
 
-def test_login_do_gestor_inicial_funciona(client: TestClient):
+def test_initial_manager_login_works(client: TestClient):
     resposta = client.post("/auth/login", json={"email": core.ADMIN_EMAIL, "password": core.ADMIN_PASSWORD})
 
     assert resposta.status_code == 200
@@ -12,13 +12,13 @@ def test_login_do_gestor_inicial_funciona(client: TestClient):
     assert resposta.json()["access_token"]
 
 
-def test_login_com_senha_errada_falha(client: TestClient):
+def test_login_with_wrong_password_fails(client: TestClient):
     resposta = client.post("/auth/login", json={"email": core.ADMIN_EMAIL, "password": "senha-errada"})
 
     assert resposta.status_code == 401
 
 
-def test_login_com_email_inexistente_falha(client: TestClient):
+def test_login_with_unknown_email_fails(client: TestClient):
     resposta = client.post("/auth/login", json={"email": "ninguem@exemplo.com", "password": "qualquer"})
 
     assert resposta.status_code == 401

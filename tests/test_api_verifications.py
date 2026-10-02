@@ -9,63 +9,63 @@ import io
 from fastapi.testclient import TestClient
 
 from main import app
-from routes.verifications import _obter_neural
+from routes.verifications import _get_neural
 
 
-class _NeuralFalsa:
-    def contar_itens(self, caminho_imagem):
+class FakeNeural:
+    def count_items(self, image_path):
         return [{"label": "parafuso_m6", "count": 3, "confidence": 0.9}]
 
 
-def _imagem_fake() -> tuple[str, io.BytesIO, str]:
+def _fake_image() -> tuple[str, io.BytesIO, str]:
     return ("foto.jpg", io.BytesIO(b"conteudo-fake-de-imagem"), "image/jpeg")
 
 
-def test_sem_modelo_treinado_devolve_503(client: TestClient, cabecalho_gestor: dict):
-    resposta = client.post("/verifications", files={"file": _imagem_fake()}, headers=cabecalho_gestor)
+def test_without_trained_model_returns_503(client: TestClient, manager_header: dict):
+    resposta = client.post("/verifications", files={"file": _fake_image()}, headers=manager_header)
 
     assert resposta.status_code == 503
 
 
-def test_cria_verificacao_com_ia_falsa(client: TestClient, cabecalho_gestor: dict):
-    app.dependency_overrides[_obter_neural] = lambda: _NeuralFalsa()
+def test_creates_verification_with_fake_ai(client: TestClient, manager_header: dict):
+    app.dependency_overrides[_get_neural] = lambda: FakeNeural()
     try:
-        resposta = client.post("/verifications", files={"file": _imagem_fake()}, headers=cabecalho_gestor)
+        resposta = client.post("/verifications", files={"file": _fake_image()}, headers=manager_header)
     finally:
-        app.dependency_overrides.pop(_obter_neural, None)
+        app.dependency_overrides.pop(_get_neural, None)
 
     assert resposta.status_code == 201
-    deteccoes = resposta.json()["detections"]
-    assert deteccoes == [{"label": "parafuso_m6", "count": 3, "confidence": 0.9}]
+    detections = resposta.json()["detections"]
+    assert detections == [{"label": "parafuso_m6", "count": 3, "confidence": 0.9}]
 
 
-def test_extensao_invalida_devolve_400(client: TestClient, cabecalho_gestor: dict):
+def test_invalid_extension_returns_400(client: TestClient, manager_header: dict):
     resposta = client.post(
         "/verifications",
         files={"file": ("foto.txt", io.BytesIO(b"nao e imagem"), "text/plain")},
-        headers=cabecalho_gestor,
+        headers=manager_header,
     )
 
     assert resposta.status_code == 400
 
 
-def test_funcionario_so_ve_as_proprias_verificacoes(client: TestClient, cabecalho_gestor: dict):
+def test_employee_only_sees_own_verifications(client: TestClient, manager_header: dict):
     client.post(
         "/users",
         json={"name": "Ana", "email": "ana@exemplo.com", "password": "senha1234", "role": "funcionario"},
-        headers=cabecalho_gestor,
+        headers=manager_header,
     )
     login = client.post("/auth/login", json={"email": "ana@exemplo.com", "password": "senha1234"})
-    cabecalho_funcionario = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    employee_header = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
-    app.dependency_overrides[_obter_neural] = lambda: _NeuralFalsa()
+    app.dependency_overrides[_get_neural] = lambda: FakeNeural()
     try:
-        client.post("/verifications", files={"file": _imagem_fake()}, headers=cabecalho_gestor)
-        client.post("/verifications", files={"file": _imagem_fake()}, headers=cabecalho_funcionario)
+        client.post("/verifications", files={"file": _fake_image()}, headers=manager_header)
+        client.post("/verifications", files={"file": _fake_image()}, headers=employee_header)
     finally:
-        app.dependency_overrides.pop(_obter_neural, None)
+        app.dependency_overrides.pop(_get_neural, None)
 
-    resposta = client.get("/verifications", headers=cabecalho_funcionario)
+    resposta = client.get("/verifications", headers=employee_header)
 
     assert resposta.status_code == 200
     assert len(resposta.json()) == 1
