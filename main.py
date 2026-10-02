@@ -10,13 +10,14 @@ import uvicorn
 from fastapi import FastAPI
 
 import core
+from models.core import Core
 from routes import auth, items, users, verifications
 from security import criar_gestor_inicial
 
 
 @asynccontextmanager
 async def ciclo_de_vida(_app: FastAPI):
-    core.criar_tabelas()
+    Core(core.DB_FILE).migrate()
     criar_gestor_inicial()
     yield
 

@@ -8,7 +8,10 @@ from pathlib import Path
 from pydantic import ValidationError
 
 import core
-from models import UsuarioCriar
+from models.core import Core
+from models.item import Item
+from models.user import EmailJaCadastradoError, User
+from schemas import UsuarioCriar
 from security import criar_gestor_inicial, gerar_hash_senha
 
 
@@ -28,19 +31,16 @@ def _criar_usuario() -> None:
         print("dados inválidos:", erro)
         return
 
-    with core.banco() as db:
-        if db.buscar_um("SELECT id FROM users WHERE email = ?", (dados.email,)):
-            print(f"já existe um usuário com o e-mail '{dados.email}'.")
-            return
-        novo_id = db.executar(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (dados.name, dados.email, gerar_hash_senha(dados.password), dados.role),
-        )
-    print(f"usuário criado: id {novo_id}, {dados.role}.")
+    try:
+        usuario = User(core.DB_FILE).criar(dados.name, dados.email, gerar_hash_senha(dados.password), dados.role)
+    except EmailJaCadastradoError:
+        print(f"já existe um usuário com o e-mail '{dados.email}'.")
+        return
+    print(f"usuário criado: id {usuario['id']}, {dados.role}.")
 
 
 def _conferir_tabelas() -> None:
-    core.criar_tabelas()
+    Core(core.DB_FILE).migrate()
     print("tabelas conferidas/criadas em", core.DB_FILE)
 
 
@@ -50,8 +50,7 @@ def _conferir_gestor() -> None:
 
 
 def _itens_cadastrados() -> list[dict]:
-    with core.banco() as db:
-        return db.buscar_todos("SELECT label, name FROM items ORDER BY name")
+    return Item(core.DB_FILE).buscar()
 
 
 def _verificar_treinamento() -> None:

@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from core import banco
-from models import Login, Token
+import core
+from models.user import User
+from schemas import Login, Token
 from security import conferir_senha, criar_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -11,8 +12,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=Token)
 def login(dados: Login) -> dict:
-    with banco() as db:
-        usuario = db.buscar_um("SELECT * FROM users WHERE email = ?", (dados.email.lower(),))
+    usuario = User(core.DB_FILE).buscar_por_email(dados.email.lower())
 
     if usuario is None or not conferir_senha(dados.password, usuario["password_hash"]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "E-mail ou senha inválidos.")

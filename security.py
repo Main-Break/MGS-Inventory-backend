@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 import core
-from core import banco
+from models.user import User
 
 _ITERACOES = 600_000  # recomendação atual da OWASP para PBKDF2-HMAC-SHA256
 _esquema = HTTPBearer(auto_error=False)
@@ -43,8 +43,7 @@ def usuario_logado(credenciais: HTTPAuthorizationCredentials | None = Depends(_e
     except jwt.PyJWTError:
         raise erro from None
 
-    with banco() as db:
-        usuario = db.buscar_um("SELECT * FROM users WHERE id = ?", (int(payload["sub"]),))
+    usuario = User(core.DB_FILE).buscar_por_id(int(payload["sub"]))
 
     if usuario is None or not usuario["active"]:
         raise erro
@@ -59,10 +58,7 @@ def gestor_logado(usuario: dict = Depends(usuario_logado)) -> dict:
 
 def criar_gestor_inicial() -> None:
     """Sem isso, ninguém consegue logar na primeira vez (só gestor cria usuário)."""
-    with banco() as db:
-        if db.buscar_um("SELECT id FROM users WHERE role = 'gestor'") is not None:
-            return
-        db.executar(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'gestor')",
-            (core.ADMIN_NAME, core.ADMIN_EMAIL.lower(), gerar_hash_senha(core.ADMIN_PASSWORD)),
-        )
+    usuarios = User(core.DB_FILE)
+    if usuarios.existe_gestor():
+        return
+    usuarios.criar(core.ADMIN_NAME, core.ADMIN_EMAIL.lower(), gerar_hash_senha(core.ADMIN_PASSWORD), "gestor")

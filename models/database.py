@@ -1,111 +1,40 @@
+"""Classe base de acesso ao banco: conexão e execução direta de SQL.
+
+Todo SQL daqui pra baixo usa `?` para valores, nunca concatena texto do
+usuário na query - é isso que protege contra SQL injection. Nomes de tabela
+e coluna são sempre fixos no código de cada model, nunca vêm de fora.
+"""
+
 import sqlite3
-
-"""
-Aqui fica a classe principal de banco de dados, a classe Mâe que fornece
-as funções básicas para manipulação de banco de dados.
-
-
-"""
+from pathlib import Path
 
 
 class Database:
-    _conn = None
-    _file = "database.db"
-
-    def __init__(self, database_file="database.db") -> None:
-
+    def __init__(self, database_file: str = "database.db") -> None:
         self._file = database_file
+        self._conn: sqlite3.Connection | None = None
 
-    def connect(self) -> None:
-        # Se já existe conexão, não faz nada
-        if self._conn is None:
-            self._conn = sqlite3.connect(self.file)
-        
-        self.cursor = self._conn.cursor()
+    def __enter__(self) -> "Database":
+        Path(self._file).parent.mkdir(parents=True, exist_ok=True)
+        self._conn = sqlite3.connect(self._file)
+        self._conn.row_factory = sqlite3.Row
+        return self
 
+    def __exit__(self, exc_type, exc, tb) -> None:
+        if exc_type is None:
+            self._conn.commit()
+        else:
+            self._conn.rollback()
+        self._conn.close()
+        self._conn = None
 
-    def fechar(self) -> None:
-        if self._conn:
-            self._conn.close()
-            self._conn = None   
+    def query_one(self, sql: str, params: tuple = ()) -> dict | None:
+        linha = self._conn.execute(sql, params).fetchone()
+        return dict(linha) if linha else None
 
-    def cmd(self, command, params=(), commit=False, fetch:str="one"):
+    def query_all(self, sql: str, params: tuple = ()) -> list[dict]:
+        linhas = self._conn.execute(sql, params).fetchall()
+        return [dict(linha) for linha in linhas]
 
-        try:
-            self.connect()
-
-            self.cursor.execute(command, params)
-            
-            if commit:
-                self.conexao.commit()
-
-            if fetch == "all":
-                return True, self.cursor.fetchall()
-
-            return True, self.cursor.fetchone()
-
-        except Exception as err:
-            return False, str(err)
-
-        finally:
-            self.fechar()
-
-
-    def cmd_multi(self, commands:dict=[], params:dict=[], commit:bool=False, fetch:str=["one"]):
-        """
-            Executa varios comando 
-        """
-
-        result_fetch = []
-
-        try:
-            self.connect()
-
-
-            for idex, command in enumerate(commands):
-                
-                self.cursor.execute(command, params[idex])
-
-                if commit:
-                    self.conexao.commit()
-
-                if fetch == "all":
-                    return self.cursor.fetchall()
-
-                return self.cursor.fetchone()
-
-            return result_fetch
-
-        except Exception as err:
-            return False, str(err)
-
-        finally:
-            self.fechar()
-
-
-    def update(
-            self, 
-            table:str, 
-            column:str, 
-            new_value:str, 
-            where:str=None, 
-            where_value:str=None, 
-            custom_where:str=None
-        ) -> bool | str:
-
-
-        if where and where_value:
-            return True, self.cmd(
-                command="UPDATE ? SET ? = ? WHERE ? = value",
-                params=(table, column, new_value, where),
-                commit=True
-            )
-
-        if custom_where:
-            return True, self.cmd(
-                command="UPDATE ? SET ? = ? WHERE ?",
-                params=(table, column, new_value, custom_where),
-                commit=True
-            )
-
-        
+    def execute(self, sql: str, params: tuple = ()) -> int:
+        return self._conn.execute(sql, params).lastrowid
