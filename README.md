@@ -1,72 +1,54 @@
-# mgs-inventario-backend
+# Inventário por Foto - API
 
-API em **Python / FastAPI** do projeto de **inventário de estoque por foto** da MGS Plásticos de Engenharia.
-Recebe as contagens sincronizadas pelo app, faz o **batimento por peso** contra o ERP (contagem × peso unitário vs. kg registrados),
-gerencia a fila de divergências e o import/export por planilha.
+Funcionário fotografa as peças, o modelo conta, e fica registrado quem
+contou o quê.
 
-Parte de um projeto acadêmico com 7 engenheiros. App em: `mgs-inventario-mobile`.
-
-## Stack
-
-- **Python 3.11+** + **FastAPI**
-- **SQLAlchemy** + **Alembic** (ORM e migrations)
-- **Pydantic** (schemas)
-- **Ultralytics (YOLOv8/v11)** — treino e inferência de fallback no servidor
-- **OpenCV** — processamento de imagem
-- **openpyxl / pandas** — import/export de planilha
-
-## Escopo do MVP
-
-- Import da planilha do ERP (código, descrição, peso unitário, saldo em kg)
-- Endpoint de detecção (fallback quando o celular não roda on-device)
-- Batimento por peso com tolerância por SKU + fila de divergências
-- Export dos registros para planilha (formato de batimento com o ERP)
-- Endpoint de sincronização do lote offline com idempotência
-
-Fora do MVP: soma de seções (stitching), integração direta com o BrERP, painel web.
-
-## Como rodar
+## Rodar
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-
-cp .env.example .env               # ajuste as variáveis
-alembic upgrade head               # cria as tabelas
-uvicorn app.main:app --reload      # sobe em http://localhost:8000
+cp .env.example .env   # defina ADMIN_PASSWORD e JWT_SECRET
+python main.py         # http://localhost:8000/docs
 ```
 
-Documentação interativa da API: `http://localhost:8000/docs`
+As tabelas são criadas sozinhas na primeira subida, junto com um gestor
+(`ADMIN_EMAIL`/`ADMIN_PASSWORD` do `.env`).
 
-## Estrutura (referência)
+## Rotas
 
-```
-app/
-├── main.py               # app FastAPI + middlewares
-├── models.py             # ORM (SQLAlchemy) + schemas (Pydantic)
-├── database.py           # sessão/conexão
-├── routes/
-│   ├── detection.py      # POST /detect (YOLO)
-│   ├── sync.py           # recebe lote offline do app
-│   └── inventory.py      # registros, divergências, export
-└── services/
-    ├── validation.py     # batimento por peso
-    └── spreadsheet.py    # import/export planilha
-alembic/                  # migrations
-```
+Login é `POST /auth/login` (e-mail+senha, devolve token JWT). Tudo o resto
+pede `Authorization: Bearer <token>`, exceto `/health`.
 
-## Variáveis de ambiente (`.env`)
+- `POST /users`, `GET /users` - só gestor, cadastra e lista usuário
+- `GET /users/me`, `PUT /users/me` - qualquer logado vê/edita os próprios dados
+- `PATCH /users/{id}/active` - só gestor, ativa/desativa acesso
+- `POST /items` - só gestor, cadastra item do catálogo
+- `GET /items?q=`, `GET /items/{id}` - busca/vê item
+- `POST /verifications` - manda uma foto (`file`, `item_id` opcional), volta a contagem
+- `GET /verifications`, `GET /verifications/{id}` - funcionário vê as próprias, gestor vê tudo
+- `PATCH /verifications/{id}/approve` - só gestor, aprova/reprova
 
-```
-DATABASE_URL=sqlite:///./inventario.db
-MODEL_PATH=./models/yolo-bastoes.pt
-UPLOAD_DIR=./uploads
-```
+## Modelo
 
-## Convenções
+Fica em `MODEL_PATH` (padrão `neural/producao.pt`). Sem esse arquivo,
+`POST /verifications` responde 503. Pra treinar um novo, joga o dataset
+(formato YOLO) em `uploads/train/` e roda `python cli.py`, opção de treino.
 
-- Branches: `feat/...`, `fix/...`, `chore/...`
-- Formatação com `black` + `ruff`; PR com 1 revisão antes do merge em `main`
+## Arquivos
 
-> Plano de sprints e critérios de aceite do MVP: ver documento do projeto.
+- `core.py` - o inicial: lê o `.env`, abre o SQLite, cria as tabelas
+- `main.py` - monta o app e junta as rotas de `routes/`
+- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, treino
+- `security.py` - senha, token, quem pode fazer o quê
+- `models.py` - formato do que entra e sai da API
+- `routes/` - um arquivo por seção (auth, users, items, verifications)
+- `neural/` - roda e treina o modelo
+- `data/` - onde fica o `.db`
+- `uploads/` - fotos enviadas, e `uploads/train/` com dataset de treino
+
+SQL é escrito à mão nas rotas, sempre com `?` como parâmetro - nada de
+concatenar valor em string, é isso que evita SQL injection. Sem ORM de
+propósito, pra continuar fácil de mexer direto no banco. Senha guardada
+com PBKDF2-HMAC-SHA256.
