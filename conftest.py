@@ -7,21 +7,21 @@ misturar dados entre testes nem com o banco real do projeto.
 import pytest
 from fastapi.testclient import TestClient
 
-import core
+import config
 from main import app
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(core, "DB_FILE", str(tmp_path / "teste.db"))
-    monkeypatch.setattr(core, "UPLOAD_DIR", tmp_path / "uploads")
+    monkeypatch.setattr(config, "DB_FILE", str(tmp_path / "teste.db"))
+    monkeypatch.setattr(config, "UPLOAD_DIR", tmp_path / "uploads")
     with TestClient(app) as cliente:
         yield cliente
 
 
 @pytest.fixture
 def manager_token(client: TestClient) -> str:
-    resposta = client.post("/auth/login", json={"email": core.ADMIN_EMAIL, "password": core.ADMIN_PASSWORD})
+    resposta = client.post("/auth/login", json={"email": config.ADMIN_EMAIL, "password": config.ADMIN_PASSWORD})
     return resposta.json()["access_token"]
 
 

@@ -6,7 +6,7 @@ Chamado pelo cli.py. Copia o melhor peso gerado para o MODEL_PATH no final.
 import shutil
 from pathlib import Path
 
-import core
+import config
 
 EPOCAS = 50
 
@@ -18,7 +18,7 @@ def train(caminho_dataset: str) -> None:
     resultado = modelo.train(data=caminho_dataset, epochs=EPOCAS, project="execucoes", name="treino", exist_ok=True)
 
     melhor_peso = Path(resultado.save_dir) / "weights" / "best.pt"
-    destino = Path(core.MODEL_PATH)
+    destino = Path(config.MODEL_PATH)
     destino.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(melhor_peso, destino)
     print(f"modelo salvo em: {destino}")

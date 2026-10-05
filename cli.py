@@ -7,9 +7,9 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-import core
-from models.core import Core
+import config
 from models.item import Item
+from models.schema import Schema
 from models.user import EmailAlreadyRegisteredError, User
 from schemas import UserCreate
 from security import create_initial_manager, hash_password
@@ -32,7 +32,7 @@ def _create_user() -> None:
         return
 
     try:
-        user = User(core.DB_FILE).create(dados.name, dados.email, hash_password(dados.password), dados.role)
+        user = User(config.DB_FILE).create(dados.name, dados.email, hash_password(dados.password), dados.role)
     except EmailAlreadyRegisteredError:
         print(f"já existe um usuário com o e-mail '{dados.email}'.")
         return
@@ -40,8 +40,8 @@ def _create_user() -> None:
 
 
 def _check_tables() -> None:
-    Core(core.DB_FILE).migrate()
-    print("tabelas conferidas/criadas em", core.DB_FILE)
+    Schema(config.DB_FILE).migrate()
+    print("tabelas conferidas/criadas em", config.DB_FILE)
 
 
 def _check_manager() -> None:
@@ -50,20 +50,20 @@ def _check_manager() -> None:
 
 
 def _registered_items() -> list[dict]:
-    return Item(core.DB_FILE).search()
+    return Item(config.DB_FILE).search()
 
 
 def _check_training() -> None:
-    modelo_existe = Path(core.MODEL_PATH).is_file()
-    print(f"modelo em produção ({core.MODEL_PATH}): {'existe' if modelo_existe else 'não existe'}")
+    modelo_existe = Path(config.MODEL_PATH).is_file()
+    print(f"modelo em produção ({config.MODEL_PATH}): {'existe' if modelo_existe else 'não existe'}")
 
-    datasets = sorted(core.TRAIN_DIR.glob("*.yaml")) if core.TRAIN_DIR.is_dir() else []
+    datasets = sorted(config.TRAIN_DIR.glob("*.yaml")) if config.TRAIN_DIR.is_dir() else []
     if datasets:
-        print(f"datasets encontrados em {core.TRAIN_DIR}:")
+        print(f"datasets encontrados em {config.TRAIN_DIR}:")
         for dataset in datasets:
             print(f"  - {dataset.name}")
     else:
-        print(f"nenhum dataset .yaml encontrado em {core.TRAIN_DIR}")
+        print(f"nenhum dataset .yaml encontrado em {config.TRAIN_DIR}")
 
     itens = _registered_items()
     print(f"itens cadastrados no catálogo: {len(itens)}")
@@ -81,7 +81,7 @@ def _train_model() -> None:
     for item in itens:
         print(f"  - {item['label']} ({item['name']})")
 
-    caminho = input(f"\ncaminho do dataset.yaml (ex: {core.TRAIN_DIR}/dataset.yaml): ").strip()
+    caminho = input(f"\ncaminho do dataset.yaml (ex: {config.TRAIN_DIR}/dataset.yaml): ").strip()
     if not caminho:
         print("cancelado.")
         return

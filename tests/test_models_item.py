@@ -2,14 +2,14 @@
 
 import pytest
 
-from models.core import Core
 from models.item import Item, LabelAlreadyRegisteredError
+from models.schema import Schema
 
 
 @pytest.fixture
 def items(tmp_path) -> Item:
     db_file = str(tmp_path / "teste.db")
-    Core(db_file).migrate()
+    Schema(db_file).migrate()
     return Item(db_file)
 
 

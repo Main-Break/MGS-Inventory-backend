@@ -2,14 +2,14 @@
 
 import pytest
 
-from models.core import Core
+from models.schema import Schema
 from models.user import EmailAlreadyRegisteredError, User
 
 
 @pytest.fixture
 def users(tmp_path) -> User:
     db_file = str(tmp_path / "teste.db")
-    Core(db_file).migrate()
+    Schema(db_file).migrate()
     return User(db_file)
 
 

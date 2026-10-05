@@ -38,17 +38,18 @@ Fica em `MODEL_PATH` (padrão `neural/producao.pt`). Sem esse arquivo,
 
 ## Arquivos
 
-- `core.py` - o inicial: lê o `.env`, abre o SQLite, cria as tabelas
-- `main.py` - monta o app e junta as rotas de `routes/`
+- `config.py` - o inicial: lê o `.env`, define caminhos e variáveis de ambiente
+- `main.py` - monta o app, roda a migração do banco e junta as rotas de `routes/`
 - `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, treino
 - `security.py` - senha, token, quem pode fazer o quê
-- `models.py` - formato do que entra e sai da API
+- `schemas.py` - formato do que entra e sai da API (Pydantic)
+- `models/` - acesso ao banco, uma classe por tabela (`user.py`, `item.py`, `verification.py`), mais `database.py` (conexão/execução de SQL) e `schema.py` (cria/confere as tabelas)
 - `routes/` - um arquivo por seção (auth, users, items, verifications)
 - `neural/` - roda e treina o modelo
 - `data/` - onde fica o `.db`
 - `uploads/` - fotos enviadas, e `uploads/train/` com dataset de treino
 
-SQL é escrito à mão nas rotas, sempre com `?` como parâmetro - nada de
+SQL é escrito à mão nos `models/`, sempre com `?` como parâmetro - nada de
 concatenar valor em string, é isso que evita SQL injection. Sem ORM de
 propósito, pra continuar fácil de mexer direto no banco. Senha guardada
 com PBKDF2-HMAC-SHA256.

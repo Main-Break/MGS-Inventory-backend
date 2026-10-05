@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
-import core
+import config
 from models.verification import Verification
 from neural.neural import ModelUnavailableError, Neural
 from schemas import Detection, VerificationOut
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/verifications", tags=["verifications"])
 
 _EXTENSOES_VALIDAS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
-_neural = Neural(core.MODEL_PATH)
+_neural = Neural(config.MODEL_PATH)
 
 
 def _get_neural() -> Neural:
@@ -24,7 +24,7 @@ def _get_neural() -> Neural:
 
 
 def _verifications() -> Verification:
-    return Verification(core.DB_FILE)
+    return Verification(config.DB_FILE)
 
 
 def _build_verification(linha: dict) -> dict:
@@ -46,13 +46,13 @@ def create_verification(
     if not conteudo:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Arquivo de imagem vazio.")
 
-    Path(core.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+    Path(config.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
     # Nome gerado aqui, nunca o do cliente: evita path traversal e sobrescrita.
     nome_arquivo = f"{uuid.uuid4().hex}{extensao}"
-    (Path(core.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
+    (Path(config.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
 
     try:
-        deteccoes = neural.count_items(Path(core.UPLOAD_DIR) / nome_arquivo)
+        deteccoes = neural.count_items(Path(config.UPLOAD_DIR) / nome_arquivo)
     except ModelUnavailableError as erro:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(erro)) from erro
 

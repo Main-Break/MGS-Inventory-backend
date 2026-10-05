@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-import core
+import config
 from models.item import Item, LabelAlreadyRegisteredError
 from schemas import ItemCreate, ItemOut
 from security import current_manager, current_user
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/items", tags=["items"])
 
 
 def _items() -> Item:
-    return Item(core.DB_FILE)
+    return Item(config.DB_FILE)
 
 
 @router.post("", response_model=ItemOut, status_code=status.HTTP_201_CREATED)

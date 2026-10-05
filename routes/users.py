@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-import core
+import config
 from models.user import EmailAlreadyRegisteredError, User
 from schemas import UserCreate, UserOut, UserUpdate
 from security import current_manager, current_user, hash_password
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _users() -> User:
-    return User(core.DB_FILE)
+    return User(config.DB_FILE)
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)

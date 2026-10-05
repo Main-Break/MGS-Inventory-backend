@@ -9,7 +9,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-import core
+import config
 from models.user import User
 
 _ITERACOES = 600_000  # recomendação atual da OWASP para PBKDF2-HMAC-SHA256
@@ -30,7 +30,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
 
 def create_token(user_id: int, role: str) -> str:
     expira = datetime.now(timezone.utc) + timedelta(hours=8)
-    return jwt.encode({"sub": str(user_id), "role": role, "exp": expira}, core.JWT_SECRET, algorithm="HS256")
+    return jwt.encode({"sub": str(user_id), "role": role, "exp": expira}, config.JWT_SECRET, algorithm="HS256")
 
 
 def current_user(credenciais: HTTPAuthorizationCredentials | None = Depends(_esquema)) -> dict:
@@ -39,11 +39,11 @@ def current_user(credenciais: HTTPAuthorizationCredentials | None = Depends(_esq
         raise erro
 
     try:
-        payload = jwt.decode(credenciais.credentials, core.JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(credenciais.credentials, config.JWT_SECRET, algorithms=["HS256"])
     except jwt.PyJWTError:
         raise erro from None
 
-    user = User(core.DB_FILE).find_by_id(int(payload["sub"]))
+    user = User(config.DB_FILE).find_by_id(int(payload["sub"]))
 
     if user is None or not user["active"]:
         raise erro
@@ -58,7 +58,7 @@ def current_manager(user: dict = Depends(current_user)) -> dict:
 
 def create_initial_manager() -> None:
     """Sem isso, ninguém consegue logar na primeira vez (só gestor cria usuário)."""
-    users = User(core.DB_FILE)
+    users = User(config.DB_FILE)
     if users.has_manager():
         return
-    users.create(core.ADMIN_NAME, core.ADMIN_EMAIL.lower(), hash_password(core.ADMIN_PASSWORD), "gestor")
+    users.create(config.ADMIN_NAME, config.ADMIN_EMAIL.lower(), hash_password(config.ADMIN_PASSWORD), "gestor")
