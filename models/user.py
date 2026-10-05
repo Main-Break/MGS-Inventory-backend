@@ -30,6 +30,15 @@ class User(Database):
         with self:
             return self.query_all("SELECT * FROM users ORDER BY id")
 
+    def search(self, term: str | None = None) -> list[dict]:
+        with self:
+            if term:
+                return self.query_all(
+                    "SELECT * FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY id",
+                    (f"%{term}%", f"%{term}%"),
+                )
+            return self.query_all("SELECT * FROM users ORDER BY id")
+
     def update(self, user_id: int, name: str, email: str, password_hash: str) -> dict:
         with self:
             self.execute(
@@ -43,6 +52,13 @@ class User(Database):
             if self.query_one("SELECT id FROM users WHERE id = ?", (user_id,)) is None:
                 return None
             self.execute("UPDATE users SET active = ? WHERE id = ?", (active, user_id))
+            return self.query_one("SELECT * FROM users WHERE id = ?", (user_id,))
+
+    def set_role(self, user_id: int, role: str) -> dict | None:
+        with self:
+            if self.query_one("SELECT id FROM users WHERE id = ?", (user_id,)) is None:
+                return None
+            self.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
             return self.query_one("SELECT * FROM users WHERE id = ?", (user_id,))
 
     def has_manager(self) -> bool:

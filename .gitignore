@@ -13,4 +13,7 @@ uploads/*
 uploads/train/*
 !uploads/train/.gitkeep
 
+backups/*
+!backups/.gitkeep
+
 neural/*.pt
