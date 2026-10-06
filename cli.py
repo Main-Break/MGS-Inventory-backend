@@ -18,10 +18,10 @@ from typing import Callable
 from pydantic import ValidationError
 
 import config
-from models.item import Item, LabelAlreadyRegisteredError
-from models.schema import Schema
-from models.user import EmailAlreadyRegisteredError, User
-from models.verification import Verification
+from models.item import DataItem
+from models.schema import DataSchema
+from models.user import DataUser
+from models.verification import DataVerification
 from schemas import UserCreate
 from security import create_initial_manager, hash_password
 
@@ -57,9 +57,11 @@ def _show_paginated(headers: list[str], rows: list[tuple]) -> None:
 
     total = len(rows)
     inicio = 0
+
     while True:
         pagina = rows[inicio : inicio + _PAGE_SIZE]
         _print_table(headers, pagina)
+
         fim = min(inicio + _PAGE_SIZE, total)
         print(f"\n-- {fim}/{total} --")
 
@@ -67,6 +69,7 @@ def _show_paginated(headers: list[str], rows: list[tuple]) -> None:
             return
         if input("[enter] próxima página, [q] parar: ").strip().lower() == "q":
             return
+
         inicio = fim
 
 
@@ -79,6 +82,7 @@ def _confirm(pergunta: str) -> bool:
 
 def _read_id(mensagem: str) -> int | None:
     bruto = input(mensagem).strip()
+
     if not bruto.isdigit():
         print("id inválido.")
         return None
@@ -88,8 +92,8 @@ def _read_id(mensagem: str) -> int | None:
 # --- usuários --------------------------------------------------------------
 
 
-def _users() -> User:
-    return User(config.DB_FILE)
+def _users() -> DataUser:
+    return DataUser(config.DB_FILE)
 
 
 def _user_row(user: dict) -> tuple:
@@ -97,6 +101,15 @@ def _user_row(user: dict) -> tuple:
 
 
 _USER_HEADERS = ["id", "nome", "e-mail", "função", "ativo"]
+
+
+def _find_user_or_warn(user_id: int) -> dict | None:
+    sucesso, resultado = _users().find_by_id(user_id)
+
+    if not sucesso:
+        print(resultado)
+        return None
+    return resultado
 
 
 def _create_user() -> None:
@@ -111,31 +124,27 @@ def _create_user() -> None:
         print("dados inválidos:", erro)
         return
 
-    try:
-        user = _users().create(dados.name, dados.email, hash_password(dados.password), dados.role)
-    except EmailAlreadyRegisteredError:
-        print(f"já existe um usuário com o e-mail '{dados.email}'.")
+    sucesso, resultado = _users().create(dados.name, dados.email, hash_password(dados.password), dados.role)
+
+    if not sucesso:
+        print(resultado)
         return
-    print(f"usuário criado: id {user['id']}, {dados.role}.")
+
+    print(f"usuário criado: id {resultado['id']}, {dados.role}.")
 
 
 def _search_users() -> None:
     termo = input("buscar por nome/e-mail (enter pra listar todos): ").strip()
-    resultados = _users().search(termo or None)
+    _, resultados = _users().search(termo or None)
+
     _show_paginated(_USER_HEADERS, [_user_row(user) for user in resultados])
-
-
-def _find_user_or_warn(user_id: int) -> dict | None:
-    user = _users().find_by_id(user_id)
-    if user is None:
-        print(f"nenhum usuário com id {user_id}.")
-    return user
 
 
 def _edit_user_profile() -> None:
     user_id = _read_id("id do usuário: ")
     if user_id is None:
         return
+
     user = _find_user_or_warn(user_id)
     if user is None:
         return
@@ -144,7 +153,7 @@ def _edit_user_profile() -> None:
     nome = input(f"novo nome (enter mantém '{user['name']}'): ").strip() or user["name"]
     email = input(f"novo e-mail (enter mantém '{user['email']}'): ").strip().lower() or user["email"]
 
-    atualizado = _users().update(user["id"], nome, email, user["password_hash"])
+    _, atualizado = _users().update(user["id"], nome, email, user["password_hash"])
     print(f"atualizado: {atualizado['name']} <{atualizado['email']}>")
 
 
@@ -152,6 +161,7 @@ def _change_user_password() -> None:
     user_id = _read_id("id do usuário: ")
     if user_id is None:
         return
+
     user = _find_user_or_warn(user_id)
     if user is None:
         return
@@ -160,6 +170,7 @@ def _change_user_password() -> None:
     if len(senha) < 8:
         print("senha curta demais, precisa de pelo menos 8 caracteres.")
         return
+
     if not _confirm(f"trocar a senha de '{user['email']}'?"):
         print("cancelado.")
         return
@@ -172,6 +183,7 @@ def _change_user_role() -> None:
     user_id = _read_id("id do usuário: ")
     if user_id is None:
         return
+
     user = _find_user_or_warn(user_id)
     if user is None:
         return
@@ -189,6 +201,7 @@ def _toggle_user_active() -> None:
     user_id = _read_id("id do usuário: ")
     if user_id is None:
         return
+
     user = _find_user_or_warn(user_id)
     if user is None:
         return
@@ -216,12 +229,13 @@ _MENU_USUARIOS: dict[str, tuple[str, Callable[[], None]]] = {
 # --- itens do catálogo -------------------------------------------------
 
 
-def _items() -> Item:
-    return Item(config.DB_FILE)
+def _items() -> DataItem:
+    return DataItem(config.DB_FILE)
 
 
 def _registered_items() -> list[dict]:
-    return _items().search()
+    _, resultado = _items().search()
+    return resultado
 
 
 def _item_row(item: dict) -> tuple:
@@ -237,17 +251,19 @@ def _create_item() -> None:
     estoque_bruto = input("estoque inicial (enter = 0): ").strip()
     estoque = int(estoque_bruto) if estoque_bruto.isdigit() else 0
 
-    try:
-        item = _items().create(label, nome, estoque)
-    except LabelAlreadyRegisteredError:
-        print(f"já existe um item com o label '{label}'.")
+    sucesso, resultado = _items().create(label, nome, estoque)
+
+    if not sucesso:
+        print(resultado)
         return
-    print(f"item criado: id {item['id']}.")
+
+    print(f"item criado: id {resultado['id']}.")
 
 
 def _search_items() -> None:
     termo = input("buscar por nome/label (enter pra listar todos): ").strip()
-    resultados = _items().search(termo or None)
+    _, resultados = _items().search(termo or None)
+
     _show_paginated(_ITEM_HEADERS, [_item_row(item) for item in resultados])
 
 
@@ -260,8 +276,8 @@ _MENU_ITENS: dict[str, tuple[str, Callable[[], None]]] = {
 # --- verificações --------------------------------------------------------
 
 
-def _verifications() -> Verification:
-    return Verification(config.DB_FILE)
+def _verifications() -> DataVerification:
+    return DataVerification(config.DB_FILE)
 
 
 def _aprovado_texto(aprovado) -> str:
@@ -287,10 +303,12 @@ _VERIFICATION_HEADERS = ["id", "usuário", "item", "detecções", "aprovado", "c
 
 def _list_verifications() -> None:
     filtro_usuario = input("filtrar por id de usuário (enter pra listar todas): ").strip()
+
     if filtro_usuario.isdigit():
-        resultados = _verifications().list_by_user(int(filtro_usuario))
+        _, resultados = _verifications().list_by_user(int(filtro_usuario))
     else:
-        resultados = _verifications().list_all()
+        _, resultados = _verifications().list_all()
+
     _show_paginated(_VERIFICATION_HEADERS, [_verification_row(linha) for linha in resultados])
 
 
@@ -298,13 +316,15 @@ def _approve_verification() -> None:
     verification_id = _read_id("id da verificação: ")
     if verification_id is None:
         return
-    linha = _verifications().find_by_id(verification_id)
-    if linha is None:
-        print(f"nenhuma verificação com id {verification_id}.")
+
+    sucesso, linha = _verifications().find_by_id(verification_id)
+    if not sucesso:
+        print(linha)
         return
 
     print(f"status atual: {_aprovado_texto(linha['approved'])}")
     aprovar = _confirm("aprovar")
+
     _verifications().approve(verification_id, aprovar)
     print(f"verificação marcada como {_aprovado_texto(aprovar)}.")
 
@@ -319,7 +339,7 @@ _MENU_VERIFICACOES: dict[str, tuple[str, Callable[[], None]]] = {
 
 
 def _check_tables() -> None:
-    Schema(config.DB_FILE).migrate()
+    DataSchema(config.DB_FILE).migrate()
     print("tabelas conferidas/criadas em", config.DB_FILE)
 
 
@@ -380,6 +400,7 @@ def _backup_database() -> None:
 
     pasta_backups = config.BASE_DIR / "backups"
     pasta_backups.mkdir(parents=True, exist_ok=True)
+
     carimbo = datetime.now().strftime("%Y%m%d_%H%M%S")
     destino = pasta_backups / f"{origem.stem}_{carimbo}.db"
 
@@ -392,6 +413,7 @@ def _backup_database() -> None:
 def _run_tests() -> None:
     print("rodando a suíte de testes (pytest)...\n")
     resultado = subprocess.run([sys.executable, "-m", "pytest"])
+
     print("\ntodos os testes passaram." if resultado.returncode == 0 else "\nalguns testes falharam, veja acima.")
 
 
@@ -418,6 +440,7 @@ def _run_menu(titulo: str, opcoes: dict[str, tuple[str, Callable[[], None]]]) ->
         escolha = input("> ").strip()
         if escolha == "0":
             return
+
         if escolha in opcoes:
             opcoes[escolha][1]()
         else:
@@ -442,6 +465,7 @@ def main() -> None:
         escolha = input("> ").strip()
         if escolha == "0":
             break
+
         if escolha in _MENU_PRINCIPAL:
             _MENU_PRINCIPAL[escolha][1]()
         else:

@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 import config
-from models.verification import Verification
+from models.verification import DataVerification
 from neural.neural import ModelUnavailableError, Neural
 from schemas import Detection, VerificationOut
 from security import current_manager, current_user
@@ -23,8 +23,8 @@ def _get_neural() -> Neural:
     return _neural
 
 
-def _verifications() -> Verification:
-    return Verification(config.DB_FILE)
+def _verifications() -> DataVerification:
+    return DataVerification(config.DB_FILE)
 
 
 def _build_verification(linha: dict) -> dict:
@@ -47,6 +47,7 @@ def create_verification(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Arquivo de imagem vazio.")
 
     Path(config.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+
     # Nome gerado aqui, nunca o do cliente: evita path traversal e sobrescrita.
     nome_arquivo = f"{uuid.uuid4().hex}{extensao}"
     (Path(config.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
@@ -56,27 +57,32 @@ def create_verification(
     except ModelUnavailableError as erro:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(erro)) from erro
 
-    linha = _verifications().create(user["id"], item_id, nome_arquivo, json.dumps(deteccoes))
+    _, linha = _verifications().create(user["id"], item_id, nome_arquivo, json.dumps(deteccoes))
     return _build_verification(linha)
 
 
 @router.get("", response_model=list[VerificationOut])
 def list_verifications(user: dict = Depends(current_user)) -> list[dict]:
     verifications = _verifications()
+
     if user["role"] == "gestor":
-        linhas = verifications.list_all()
+        _, linhas = verifications.list_all()
     else:
-        linhas = verifications.list_by_user(user["id"])
+        _, linhas = verifications.list_by_user(user["id"])
+
     return [_build_verification(linha) for linha in linhas]
 
 
 @router.get("/{verification_id}", response_model=VerificationOut)
 def get_verification(verification_id: int, user: dict = Depends(current_user)) -> dict:
-    linha = _verifications().find_by_id(verification_id)
-    if linha is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Verificação não encontrada.")
+    sucesso, linha = _verifications().find_by_id(verification_id)
+
+    if not sucesso:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, linha)
+
     if user["role"] != "gestor" and linha["user_id"] != user["id"]:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Sem acesso a essa verificação.")
+
     return _build_verification(linha)
 
 
@@ -84,7 +90,8 @@ def get_verification(verification_id: int, user: dict = Depends(current_user)) -
 def approve_verification(
     verification_id: int, aprovado: bool, _manager: dict = Depends(current_manager)
 ) -> dict:
-    linha = _verifications().approve(verification_id, aprovado)
-    if linha is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Verificação não encontrada.")
+    sucesso, linha = _verifications().approve(verification_id, aprovado)
+
+    if not sucesso:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, linha)
     return _build_verification(linha)

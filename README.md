@@ -10,7 +10,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # defina ADMIN_PASSWORD e JWT_SECRET
-python main.py         # http://localhost:8000/docs
+python app.py           # http://localhost:8000/docs
 ```
 
 As tabelas são criadas sozinhas na primeira subida, junto com um gestor
@@ -39,17 +39,25 @@ Fica em `MODEL_PATH` (padrão `neural/producao.pt`). Sem esse arquivo,
 ## Arquivos
 
 - `config.py` - o inicial: lê o `.env`, define caminhos e variáveis de ambiente
-- `main.py` - monta o app, roda a migração do banco e junta as rotas de `routes/`
-- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, treino
+- `main.py` - monta a instância do FastAPI (CORS, migração do banco, gestor inicial)
+- `routes_register.py` - pendura cada módulo de `routes/` na instância do FastAPI
+- `app.py` - ponto de entrada (`python app.py`): junta main.py + routes_register.py e sobe o servidor
+- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, backup do banco, treino
 - `security.py` - senha, token, quem pode fazer o quê
 - `schemas.py` - formato do que entra e sai da API (Pydantic)
-- `models/` - acesso ao banco, uma classe por tabela (`user.py`, `item.py`, `verification.py`), mais `database.py` (conexão/execução de SQL) e `schema.py` (cria/confere as tabelas)
+- `models/` - acesso ao banco, uma classe `Data<Entidade>` por tabela (`DataUser`, `DataItem`, `DataVerification`), mais `database.py` (classe mãe `Database`: conexão/execução de SQL) e `schema.py` (`DataSchema`, cria/confere as tabelas)
 - `routes/` - um arquivo por seção (auth, users, items, verifications)
 - `neural/` - roda e treina o modelo
 - `data/` - onde fica o `.db`
 - `uploads/` - fotos enviadas, e `uploads/train/` com dataset de treino
+- `backups/` - cópias do banco geradas pelo `cli.py`
 
 SQL é escrito à mão nos `models/`, sempre com `?` como parâmetro - nada de
 concatenar valor em string, é isso que evita SQL injection. Sem ORM de
 propósito, pra continuar fácil de mexer direto no banco. Senha guardada
 com PBKDF2-HMAC-SHA256.
+
+Toda função dos `models/` devolve `(sucesso: bool, dado)`: em caso de
+sucesso, o dado é o registro ou a lista; em caso de falha, é uma mensagem
+pronta pra mostrar pro usuário. Facilita crescer o projeto sem precisar
+criar uma exceção nova pra cada regra de negócio nova.

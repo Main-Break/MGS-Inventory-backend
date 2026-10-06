@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 import config
-from models.user import User
+from models.user import DataUser
 from schemas import Login, Token
 from security import create_token, verify_password
 
@@ -12,10 +12,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=Token)
 def login(dados: Login) -> dict:
-    user = User(config.DB_FILE).find_by_email(dados.email.lower())
+    sucesso, user = DataUser(config.DB_FILE).find_by_email(dados.email.lower())
 
-    if user is None or not verify_password(dados.password, user["password_hash"]):
+    if not sucesso or not verify_password(dados.password, user["password_hash"]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "E-mail ou senha inválidos.")
+
     if not user["active"]:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Usuário desativado.")
 

@@ -9,7 +9,8 @@ um "update_2.sql" solto por fora, sempre atualizar as tabelas aqui.
 from models.database import Database
 
 
-class Schema(Database):
+class DataSchema(Database):
+
     def migrate(self) -> None:
         with self:
             self.execute(

@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 import config
-from models.user import User
+from models.user import DataUser
 
 _ITERACOES = 600_000  # recomendação atual da OWASP para PBKDF2-HMAC-SHA256
 _esquema = HTTPBearer(auto_error=False)
@@ -35,6 +35,7 @@ def create_token(user_id: int, role: str) -> str:
 
 def current_user(credenciais: HTTPAuthorizationCredentials | None = Depends(_esquema)) -> dict:
     erro = HTTPException(status.HTTP_401_UNAUTHORIZED, "Token inválido, expirado ou ausente.")
+
     if credenciais is None:
         raise erro
 
@@ -43,9 +44,9 @@ def current_user(credenciais: HTTPAuthorizationCredentials | None = Depends(_esq
     except jwt.PyJWTError:
         raise erro from None
 
-    user = User(config.DB_FILE).find_by_id(int(payload["sub"]))
+    sucesso, user = DataUser(config.DB_FILE).find_by_id(int(payload["sub"]))
 
-    if user is None or not user["active"]:
+    if not sucesso or not user["active"]:
         raise erro
     return user
 
@@ -58,7 +59,8 @@ def current_manager(user: dict = Depends(current_user)) -> dict:
 
 def create_initial_manager() -> None:
     """Sem isso, ninguém consegue logar na primeira vez (só gestor cria usuário)."""
-    users = User(config.DB_FILE)
+    users = DataUser(config.DB_FILE)
+
     if users.has_manager():
         return
     users.create(config.ADMIN_NAME, config.ADMIN_EMAIL.lower(), hash_password(config.ADMIN_PASSWORD), "gestor")

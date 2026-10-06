@@ -1,32 +1,42 @@
-"""Operações da tabela items."""
+"""Operações da tabela items.
+
+Toda função que busca/grava dado devolve (sucesso: bool, dado): em caso de
+sucesso, dado é o registro (dict) ou lista; em caso de falha, dado é uma
+mensagem pronta pra mostrar pro usuário/cliente da API.
+"""
 
 from models.database import Database
 
 
-class LabelAlreadyRegisteredError(Exception):
-    pass
+class DataItem(Database):
 
-
-class Item(Database):
-    def create(self, label: str, name: str, stock_quantity: int = 0) -> dict:
+    def create(self, label: str, name: str, stock_quantity: int = 0) -> tuple[bool, dict | str]:
         with self:
             if self.query_one("SELECT id FROM items WHERE label = ?", (label,)):
-                raise LabelAlreadyRegisteredError(label)
+                return False, "Já existe um item com esse label."
+
             new_id = self.execute(
                 "INSERT INTO items (label, name, stock_quantity) VALUES (?, ?, ?)",
                 (label, name, stock_quantity),
             )
-            return self.query_one("SELECT * FROM items WHERE id = ?", (new_id,))
+            return True, self.query_one("SELECT * FROM items WHERE id = ?", (new_id,))
 
-    def find_by_id(self, item_id: int) -> dict | None:
+    def find_by_id(self, item_id: int) -> tuple[bool, dict | str]:
         with self:
-            return self.query_one("SELECT * FROM items WHERE id = ?", (item_id,))
+            item = self.query_one("SELECT * FROM items WHERE id = ?", (item_id,))
 
-    def search(self, term: str | None = None) -> list[dict]:
+        if item is None:
+            return False, "Item não encontrado."
+        return True, item
+
+    def search(self, term: str | None = None) -> tuple[bool, list[dict]]:
         with self:
             if term:
-                return self.query_all(
+                resultado = self.query_all(
                     "SELECT * FROM items WHERE name LIKE ? OR label LIKE ? ORDER BY name",
                     (f"%{term}%", f"%{term}%"),
                 )
-            return self.query_all("SELECT * FROM items ORDER BY name")
+            else:
+                resultado = self.query_all("SELECT * FROM items ORDER BY name")
+
+        return True, resultado
