@@ -3,7 +3,6 @@
 Todo SQL do projeto usa parâmetro (?), nunca concatena valor no texto -
 é isso que protege contra SQL injection.
 """
-
 import sqlite3
 from contextlib import contextmanager
 

@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status, APIRouter
 
 import neural.ai as ai
 from models.database import banco, criar_tabelas
@@ -60,6 +60,6 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
 
-app = FastAPI(title="Inventário por Foto MGS - API", lifespan=ciclo_de_vida)
+API = FastAPI(title="Inventário por Foto MGS - API", lifespan=ciclo_de_vida)
 
 _EXTENSOES_VALIDAS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
