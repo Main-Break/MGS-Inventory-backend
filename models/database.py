@@ -7,7 +7,7 @@ Todo SQL do projeto usa parâmetro (?), nunca concatena valor no texto -
 import sqlite3
 from contextlib import contextmanager
 
-import config
+import core
 
 
 class Banco:
@@ -28,7 +28,7 @@ class Banco:
 
 @contextmanager
 def banco():
-    conexao = sqlite3.connect(config.DB_FILE)
+    conexao = sqlite3.connect(core.DB_FILE)
     conexao.row_factory = sqlite3.Row
     try:
         db = Banco(conexao)

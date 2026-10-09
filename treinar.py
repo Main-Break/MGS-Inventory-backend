@@ -9,7 +9,7 @@ import shutil
 import sys
 from pathlib import Path
 
-import config
+import core
 
 EPOCAS = 50
 
@@ -21,7 +21,7 @@ def treinar(caminho_dataset: str) -> None:
     resultado = modelo.train(data=caminho_dataset, epochs=EPOCAS, project="execucoes", name="treino", exist_ok=True)
 
     melhor_peso = Path(resultado.save_dir) / "weights" / "best.pt"
-    destino = Path(config.MODEL_PATH)
+    destino = Path(core.MODEL_PATH)
     destino.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(melhor_peso, destino)
     print(f"modelo salvo em: {destino}")

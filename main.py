@@ -1,48 +1,3 @@
-"""API de inventário por foto: usuário fotografa, o modelo de IA conta os
-itens, e fica registrado quem contou o quê."""
-
-import json
-import uuid
-from contextlib import asynccontextmanager
-from pathlib import Path
-
-import uvicorn
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status
-
-import ai
-import config
-from database import banco, criar_tabelas
-from models import (
-    Deteccao,
-    Item,
-    ItemCriar,
-    Login,
-    Token,
-    Usuario,
-    UsuarioAtualizar,
-    UsuarioCriar,
-    Verificacao,
-)
-from security import (
-    conferir_senha,
-    criar_gestor_inicial,
-    criar_token,
-    gerar_hash_senha,
-    gestor_logado,
-    usuario_logado,
-)
-
-
-@asynccontextmanager
-async def ciclo_de_vida(_app: FastAPI):
-    criar_tabelas()
-    criar_gestor_inicial()
-    yield
-
-
-app = FastAPI(title="Inventário por Foto - API", lifespan=ciclo_de_vida)
-
-_EXTENSOES_VALIDAS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
 @app.get("/health", tags=["health"])
@@ -170,13 +125,13 @@ def criar_verificacao(
     if not conteudo:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Arquivo de imagem vazio.")
 
-    Path(config.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+    Path(core.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
     # Nome gerado aqui, nunca o do cliente: evita path traversal e sobrescrita.
     nome_arquivo = f"{uuid.uuid4().hex}{extensao}"
-    (Path(config.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
+    (Path(core.UPLOAD_DIR) / nome_arquivo).write_bytes(conteudo)
 
     try:
-        deteccoes = ai.contar_itens(Path(config.UPLOAD_DIR) / nome_arquivo)
+        deteccoes = ai.contar_itens(Path(core.UPLOAD_DIR) / nome_arquivo)
     except ai.ModeloIndisponivelError as erro:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(erro)) from erro
 
@@ -221,4 +176,4 @@ def aprovar_verificacao(verificacao_id: int, aprovado: bool, _gestor: dict = Dep
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=config.HOST, port=config.PORT, reload=True)
+    uvicorn.run("main:app", host=core.HOST, port=core.PORT, reload=True)

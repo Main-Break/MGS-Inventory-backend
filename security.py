@@ -9,8 +9,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-import config
-from database import banco
+import core
+from models.database import banco
 
 _ITERACOES = 600_000  # recomendação atual da OWASP para PBKDF2-HMAC-SHA256
 _esquema = HTTPBearer(auto_error=False)
@@ -30,7 +30,7 @@ def conferir_senha(senha: str, hash_salvo: str) -> bool:
 
 def criar_token(usuario_id: int, papel: str) -> str:
     expira = datetime.now(timezone.utc) + timedelta(hours=8)
-    return jwt.encode({"sub": str(usuario_id), "role": papel, "exp": expira}, config.JWT_SECRET, algorithm="HS256")
+    return jwt.encode({"sub": str(usuario_id), "role": papel, "exp": expira}, core.JWT_SECRET, algorithm="HS256")
 
 
 def usuario_logado(credenciais: HTTPAuthorizationCredentials | None = Depends(_esquema)) -> dict:
@@ -39,7 +39,7 @@ def usuario_logado(credenciais: HTTPAuthorizationCredentials | None = Depends(_e
         raise erro
 
     try:
-        payload = jwt.decode(credenciais.credentials, config.JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(credenciais.credentials, core.JWT_SECRET, algorithms=["HS256"])
     except jwt.PyJWTError:
         raise erro from None
 
@@ -64,5 +64,5 @@ def criar_gestor_inicial() -> None:
             return
         db.executar(
             "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'gestor')",
-            (config.ADMIN_NAME, config.ADMIN_EMAIL.lower(), gerar_hash_senha(config.ADMIN_PASSWORD)),
+            (core.ADMIN_NAME, core.ADMIN_EMAIL.lower(), gerar_hash_senha(core.ADMIN_PASSWORD)),
         )
