@@ -6,7 +6,7 @@ ModeloIndisponivelError (a rota devolve 503).
 
 from pathlib import Path
 
-import config
+import core
 
 _modelo = None
 
@@ -19,13 +19,13 @@ def contar_itens(caminho_imagem: Path) -> list[dict]:
     global _modelo
 
     if _modelo is None:
-        if not Path(config.MODEL_PATH).is_file():
+        if not Path(core.MODEL_PATH).is_file():
             raise ModeloIndisponivelError(
-                f"Modelo de detecção não encontrado em '{config.MODEL_PATH}'."
+                f"Modelo de detecção não encontrado em '{core.MODEL_PATH}'."
             )
         from ultralytics import YOLO  # pesado, só importa se o modelo existir
 
-        _modelo = YOLO(config.MODEL_PATH)
+        _modelo = YOLO(core.MODEL_PATH)
 
     resultado = _modelo(source=str(caminho_imagem))[0]
 
