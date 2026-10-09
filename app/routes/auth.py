@@ -3,9 +3,9 @@
 from fastapi import APIRouter, HTTPException, status
 
 import config
-from models.user import DataUser
-from schemas import Login, Token
-from security import create_token, verify_password
+from app.models.user import DataUser
+from app.schemas import Login, Token
+from app.util.security import create_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

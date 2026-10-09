@@ -7,10 +7,10 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 import config
-from models.verification import DataVerification
-from neural.neural import ModelUnavailableError, Neural
-from schemas import Detection, VerificationOut
-from security import current_manager, current_user
+from app.models.verification import DataVerification
+from app.neural.neural import ModelUnavailableError, Neural
+from app.schemas import Detection, VerificationOut
+from app.util.security import current_manager, current_user
 
 router = APIRouter(prefix="/verifications", tags=["verifications"])
 

@@ -6,7 +6,7 @@ servidor. Este arquivo é o schema completo e atual do banco - nunca criar
 um "update_2.sql" solto por fora, sempre atualizar as tabelas aqui.
 """
 
-from models.database import Database
+from app.models.database import Database
 
 
 class DataSchema(Database):

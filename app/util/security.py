@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 import config
-from models.user import DataUser
+from app.models.user import DataUser
 
 _ITERACOES = 600_000  # recomendação atual da OWASP para PBKDF2-HMAC-SHA256
 _esquema = HTTPBearer(auto_error=False)

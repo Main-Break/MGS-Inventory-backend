@@ -18,12 +18,12 @@ from typing import Callable
 from pydantic import ValidationError
 
 import config
-from models.item import DataItem
-from models.schema import DataSchema
-from models.user import DataUser
-from models.verification import DataVerification
-from schemas import UserCreate
-from security import create_initial_manager, hash_password
+from app.models.item import DataItem
+from app.models.schema import DataSchema
+from app.models.user import DataUser
+from app.models.verification import DataVerification
+from app.schemas import UserCreate
+from app.util.security import create_initial_manager, hash_password
 
 _PAGE_SIZE = 10
 
@@ -385,7 +385,7 @@ def _train_model() -> None:
         print("cancelado.")
         return
 
-    from neural.treino import train
+    from app.neural.treino import train
 
     train(caminho)
 

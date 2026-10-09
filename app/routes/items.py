@@ -3,9 +3,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import config
-from models.item import DataItem
-from schemas import ItemCreate, ItemOut
-from security import current_manager, current_user
+from app.models.item import DataItem
+from app.schemas import ItemCreate, ItemOut
+from app.util.security import current_manager, current_user
 
 router = APIRouter(prefix="/items", tags=["items"])
 

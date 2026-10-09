@@ -5,7 +5,7 @@ sucesso, dado é o registro (dict) ou lista; em caso de falha, dado é uma
 mensagem pronta pra mostrar pro usuário/cliente da API.
 """
 
-from models.database import Database
+from app.models.database import Database
 
 
 class DataUser(Database):

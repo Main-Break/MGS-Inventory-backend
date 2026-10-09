@@ -7,7 +7,8 @@ não precisa mudar.
 
 from fastapi import FastAPI
 
-from routes import auth, items, users, verifications
+from app.routes import auth, items, users
+from app.routes import verifications
 
 
 def register_routes(app: FastAPI) -> None:

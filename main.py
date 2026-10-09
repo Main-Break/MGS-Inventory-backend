@@ -1,41 +1,21 @@
-"""API de inventário por foto: usuário fotografa, o modelo de IA conta os
-itens, e fica registrado quem contou o quê.
+"""Ponto de entrada do sistema. Roda direto:
 
-Monta a instância do FastAPI: CORS, migração automática do banco e o
-gestor inicial. As rotas em si não são penduradas aqui, e sim por
-routes_register.py (chamado em app.py) - crescer o projeto com um domínio
-novo (ex: fornecedores, pedidos) é criar um routes/novo_modulo.py e somar
-uma linha em routes_register.py, sem precisar tocar neste arquivo.
+    python app.py
 """
 
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
+import uvicorn
 import config
-from models.schema import DataSchema
-from security import create_initial_manager
+from app.app import app, HOST, PORT
+from app.routes_register import register_routes
+
+register_routes(app)
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    DataSchema(config.DB_FILE).migrate()
-    create_initial_manager()
-    yield
+"""O inicial do projeto: variáveis de ambiente e pastas.
 
+Tudo que as rotas, o cli.py e os models precisam pra funcionar (config,
+caminhos) vem daqui. O acesso ao banco em si fica nos models (models/).
+"""
 
-app = FastAPI(title="Inventário por Foto - API", lifespan=lifespan)
-
-# Libera o front (outra origem, ex: localhost:5173) pra chamar a API.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[config.FRONTEND_ORIGIN],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.get("/health", tags=["health"])
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+if __name__ == "__main__":
+    uvicorn.run("app:app", host=HOST, port=PORT, reload=True)

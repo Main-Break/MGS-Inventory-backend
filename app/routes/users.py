@@ -3,9 +3,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import config
-from models.user import DataUser
-from schemas import UserCreate, UserOut, UserUpdate
-from security import current_manager, current_user, hash_password
+from app.models.user import DataUser
+from app.schemas import UserCreate, UserOut, UserUpdate
+from app.util.security import current_manager, current_user, hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
