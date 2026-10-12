@@ -9,14 +9,19 @@ class Config:
         load_dotenv()
 
         self.BASE_DIR = Path(__file__).resolve().parent
-        self.DATA_DIR = self.BASE_DIR / "data"
         self.NEURAL_DIR = self.BASE_DIR / "neural"
         self.UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(self.BASE_DIR / "uploads")))
         self.TRAIN_DIR = self.UPLOAD_DIR / "train"
 
         self.VERSION = os.getenv("VERSION", "0.1.0")
 
-        self.DB_FILE = os.getenv("DB_FILE", str(self.DATA_DIR / "database.db"))
+        # Banco de dados principal (MySQL / MariaDB).
+        self.DB_HOST = os.getenv("DB_HOST", "localhost")
+        self.DB_PORT = int(os.getenv("DB_PORT", "3306"))
+        self.DB_USER = os.getenv("DB_USER", "")
+        self.DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+        self.DB_NAME = os.getenv("DB_NAME", "")
+
         self.MODEL_PATH = os.getenv("MODEL_PATH", str(self.NEURAL_DIR / "producao.pt"))
         self.JWT_SECRET = os.getenv("JWT_SECRET", "troque-esta-chave-no-.env")
 

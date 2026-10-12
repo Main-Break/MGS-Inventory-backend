@@ -44,7 +44,7 @@ def current_user(credenciais: HTTPAuthorizationCredentials | None = Depends(_esq
     except jwt.PyJWTError:
         raise erro from None
 
-    sucesso, user = DataUser(config.DB_FILE).find_by_id(int(payload["sub"]))
+    sucesso, user = DataUser().find_by_id(int(payload["sub"]))
 
     if not sucesso or not user["active"]:
         raise erro
@@ -59,7 +59,7 @@ def current_manager(user: dict = Depends(current_user)) -> dict:
 
 def create_initial_manager() -> None:
     """Sem isso, ninguém consegue logar na primeira vez (só gestor cria usuário)."""
-    users = DataUser(config.DB_FILE)
+    users = DataUser()
 
     if users.has_manager():
         return

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/items", tags=["items"])
 
 
 def _items() -> DataItem:
-    return DataItem(config.DB_FILE)
+    return DataItem()
 
 
 @router.post("", response_model=ItemOut, status_code=status.HTTP_201_CREATED)

@@ -39,20 +39,18 @@ Fica em `MODEL_PATH` (padrão `neural/producao.pt`). Sem esse arquivo,
 ## Arquivos
 
 - `config.py` - o inicial: lê o `.env`, define caminhos e variáveis de ambiente
-- `main.py` - monta a instância do FastAPI (CORS, migração do banco, gestor inicial)
+- `main.py` - monta a instância do FastAPI (CORS, gestor inicial)
 - `routes_register.py` - pendura cada módulo de `routes/` na instância do FastAPI
 - `app.py` - ponto de entrada (`python app.py`): junta main.py + routes_register.py e sobe o servidor
-- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, backup do banco, treino
+- `cli.py` - o que não é rota: criar usuário/gestor pelo terminal, treino
 - `security.py` - senha, token, quem pode fazer o quê
 - `schemas.py` - formato do que entra e sai da API (Pydantic)
-- `models/` - acesso ao banco, uma classe `Data<Entidade>` por tabela (`DataUser`, `DataItem`, `DataVerification`), mais `database.py` (classe mãe `Database`: conexão/execução de SQL) e `schema.py` (`DataSchema`, cria/confere as tabelas)
+- `models/` - acesso ao banco, uma classe `Data<Entidade>` por tabela (`DataUser`, `DataItem`, `DataVerification`), mais `database.py` (classe mãe `Database`: conexão/execução de SQL no MySQL/MariaDB)
 - `routes/` - um arquivo por seção (auth, users, items, verifications)
 - `neural/` - roda e treina o modelo
-- `data/` - onde fica o `.db`
 - `uploads/` - fotos enviadas, e `uploads/train/` com dataset de treino
-- `backups/` - cópias do banco geradas pelo `cli.py`
 
-SQL é escrito à mão nos `models/`, sempre com `?` como parâmetro - nada de
+SQL é escrito à mão nos `models/`, sempre com `%s` como parâmetro - nada de
 concatenar valor em string, é isso que evita SQL injection. Sem ORM de
 propósito, pra continuar fácil de mexer direto no banco. Senha guardada
 com PBKDF2-HMAC-SHA256.

@@ -8,10 +8,8 @@ qualquer usuário, trocar função, aprovar verificação, etc.
 """
 
 import json
-import sqlite3
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
@@ -19,7 +17,6 @@ from pydantic import ValidationError
 
 import config
 from app.models.item import DataItem
-from app.models.schema import DataSchema
 from app.models.user import DataUser
 from app.models.verification import DataVerification
 from app.schemas import UserCreate
@@ -93,7 +90,7 @@ def _read_id(mensagem: str) -> int | None:
 
 
 def _users() -> DataUser:
-    return DataUser(config.DB_FILE)
+    return DataUser()
 
 
 def _user_row(user: dict) -> tuple:
@@ -230,7 +227,7 @@ _MENU_USUARIOS: dict[str, tuple[str, Callable[[], None]]] = {
 
 
 def _items() -> DataItem:
-    return DataItem(config.DB_FILE)
+    return DataItem()
 
 
 def _registered_items() -> list[dict]:
@@ -277,7 +274,7 @@ _MENU_ITENS: dict[str, tuple[str, Callable[[], None]]] = {
 
 
 def _verifications() -> DataVerification:
-    return DataVerification(config.DB_FILE)
+    return DataVerification()
 
 
 def _aprovado_texto(aprovado) -> str:
@@ -338,11 +335,6 @@ _MENU_VERIFICACOES: dict[str, tuple[str, Callable[[], None]]] = {
 # --- banco de dados / sistema --------------------------------------------
 
 
-def _check_tables() -> None:
-    DataSchema(config.DB_FILE).migrate()
-    print("tabelas conferidas/criadas em", config.DB_FILE)
-
-
 def _check_manager() -> None:
     create_initial_manager()
     print("gestor inicial conferido/criado.")
@@ -390,26 +382,6 @@ def _train_model() -> None:
     train(caminho)
 
 
-def _backup_database() -> None:
-    """Cópia a quente do SQLite (sqlite3 Connection.backup), segura mesmo
-    com o servidor rodando e escrevendo no banco ao mesmo tempo."""
-    origem = Path(config.DB_FILE)
-    if not origem.is_file():
-        print(f"banco não encontrado em '{origem}'.")
-        return
-
-    pasta_backups = config.BASE_DIR / "backups"
-    pasta_backups.mkdir(parents=True, exist_ok=True)
-
-    carimbo = datetime.now().strftime("%Y%m%d_%H%M%S")
-    destino = pasta_backups / f"{origem.stem}_{carimbo}.db"
-
-    with sqlite3.connect(origem) as conexao_origem, sqlite3.connect(destino) as conexao_destino:
-        conexao_origem.backup(conexao_destino)
-
-    print(f"backup criado em: {destino}")
-
-
 def _run_tests() -> None:
     print("rodando a suíte de testes (pytest)...\n")
     resultado = subprocess.run([sys.executable, "-m", "pytest"])
@@ -419,11 +391,9 @@ def _run_tests() -> None:
 
 _MENU_SISTEMA: dict[str, tuple[str, Callable[[], None]]] = {
     "1": ("Conferir/criar gestor inicial", _check_manager),
-    "2": ("Conferir/criar tabelas do banco", _check_tables),
-    "3": ("Verificar treinamento (modelo, dataset, itens)", _check_training),
-    "4": ("Treinar modelo", _train_model),
-    "5": ("Criar backup do banco", _backup_database),
-    "6": ("Rodar testes (pytest)", _run_tests),
+    "2": ("Verificar treinamento (modelo, dataset, itens)", _check_training),
+    "3": ("Treinar modelo", _train_model),
+    "4": ("Rodar testes (pytest)", _run_tests),
 }
 
 

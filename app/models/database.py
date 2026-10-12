@@ -1,5 +1,5 @@
 """
-Classe mãe para manipulação do banco de dados, seja ele SQLite ou MySQL.
+Classe mãe para manipulação do banco de dados MySQL / MariaDB.
 Esta classe fornece métodos para conectar, desconectar e executar comandos SQL no banco de dados.
 
 Toda função da Database retorna dois parametros, sendo o primeiro um booleano indicando
@@ -7,67 +7,45 @@ sucesso ou falha da operação, e o segundo o resultado da operação, que pode 
 uma lista de dicionários ou None, dependendo do tipo de operação realizada.
 
 Regra para escrever SQL no projeto:
-    - Sempre use "?" no lugar dos valores, independente do banco.
-      O cmd() troca "?" por "%s" sozinho quando o banco for MySQL.
+    - Use "%s" no lugar dos valores, ex: "SELECT * FROM users WHERE id = %s".
     - Nunca coloque valores direto no texto do SQL, sempre passe em params.
+
+Os dados de conexão vêm do .env (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME).
 
 """
 
 # Imports
-import sqlite3
-from pathlib import Path
+import uuid
 import mysql.connector
+from app.config import Config
 
 #
 class Database:
 
-    def __init__(
-            self,
-            _type: str = "sqlite",
-            sqlite_file: str = "database.db",
-            mysql_host: str = None,
-            mysql_user: str = None,
-            mysql_password: str = None,
-            mysql_database: str = None
-        ) -> None:
+    def __init__(self) -> None:
+        config = Config()
 
-        self._type = _type
-        self._file = sqlite_file
-        self._conn: sqlite3.Connection | mysql.connector.Connection | None = None
+        self._DB_HOST = config.DB_HOST
+        self._DB_PORT = config.DB_PORT
+        self._DB_USER = config.DB_USER
+        self._DB_PASSWORD = config.DB_PASSWORD
+        self._DB_NAME = config.DB_NAME
 
-        self._DB_HOST = mysql_host
-        self._DB_USER = mysql_user
-        self._DB_PASSWORD = mysql_password
-        self._DB_NAME = mysql_database
-    
-        # Procura criar o diretório do arquivo de banco de dados, caso não exista.
-        Path(self._file).parent.mkdir(parents=True, exist_ok=True)
+        self._conn: mysql.connector.MySQLConnection | None = None
 
-        # Conecta ao banco de dados dependendo do tipo especificado (SQLite ou MySQL).
         self.connect()
 
     def connect(self) -> None:
         try:
-            if self._type == "sqlite":
-                self._conn = sqlite3.connect(self._file)
-                self._conn.row_factory = sqlite3.Row
-            else:
-                self._conn = mysql.connector.connect(
-                    host=self._DB_HOST,
-                    user=self._DB_USER,
-                    password=self._DB_PASSWORD,
-                    database=self._DB_NAME
-                )
-
-        except sqlite3.Error as e:
-            print(f"Erro ao conectar ao banco de dados SQLite: {e}")
-            raise
+            self._conn = mysql.connector.connect(
+                host=self._DB_HOST,
+                port=self._DB_PORT,
+                user=self._DB_USER,
+                password=self._DB_PASSWORD,
+                database=self._DB_NAME
+            )
 
         except mysql.connector.Error as e:
-            print(f"Erro ao conectar ao banco de dados MySQL: {e}")
-            raise
-
-        except Exception as e:
             print(f"Erro ao conectar ao banco de dados: {e}")
             raise
 
@@ -76,47 +54,40 @@ class Database:
             self._conn.close()
             self._conn = None
 
-    def cmd(self, command: str, params: tuple = (), fetch: str = "none") -> bool | None:
+    def cmd(self, command: str, params: tuple = (), fetch: str = "none") -> tuple[bool, dict | list | None]:
         """
         Função geral para envio de comando SQL ao banco de dados, com suporte a parâmetros e diferentes tipos de busca de resultados.
+
+        Exemplo:
+            db.cmd("SELECT * FROM users WHERE id = %s", (user_id,), fetch="one")
         """
 
         # Se a conexão não estiver estabelecida, tenta conectar ao banco de dados.
         if self._conn is None:
             self.connect()
 
-        # O SQL do projeto é escrito sempre com "?". O MySQL usa "%s", então troca aqui.
-        if self._type != "sqlite":
-            command = command.replace("?", "%s")
+        # dictionary=True faz cada linha vir como dicionário, ex: {"id": "...", "name": "..."}
+        cursor = self._conn.cursor(dictionary=True)
 
-        # No SQLite o row_factory já devolve linhas que viram dicionário.
-        # No MySQL é preciso pedir ao cursor que devolva dicionários.
-        if self._type == "sqlite":
-            cursor = self._conn.cursor()
-        else:
-            cursor = self._conn.cursor(dictionary=True)
-
-        # Busca um único resultado da consulta e retorna como um dicionário.
+        # Busca um único resultado da consulta.
         if fetch == "one":
             cursor.execute(command, params)
             result = cursor.fetchone()
             cursor.close()
-            return True, dict(result) if result else None
+            return True, result
 
-        # Busca todos os resultados da consulta e retorna uma lista de dicionários.
+        # Busca todos os resultados da consulta.
         elif fetch == "all":
             cursor.execute(command, params)
             results = cursor.fetchall()
             cursor.close()
-            return True, [dict(row) for row in results]
+            return True, results
 
         # Caso não seja necessário buscar resultados, apenas executa o comando e confirma a transação.
-        # Retorna o id da última linha inserida (útil após um INSERT, nos demais casos pode ser 0 ou None).
         cursor.execute(command, params)
         self._conn.commit()
-        last_id = cursor.lastrowid
         cursor.close()
-        return True, last_id
+        return True, None
 
     def check_names(self, names: list) -> None:
         """
@@ -129,12 +100,14 @@ class Database:
             if not name.replace("_", "").isalnum() or not name.isascii():
                 raise ValueError(f"Nome de tabela ou coluna inválido: {name}")
 
-    def insert_table(self, table: str, columns: list, values: list) -> tuple[bool, int | None]:
+    def insert_table(self, table: str, columns: list, values: list) -> tuple[bool, str]:
         """
         Insere um registro na tabela informada e retorna o id gerado.
+        O id é um UUID-4 gerado aqui, então não precisa ser informado nas colunas.
 
         Exemple:
             db.insert_table("users", ["name", "email"], ["User Name", "name@exemple.com"])
+            Retorna: (True, "3f1c9a2e-8b4d-4e6f-9a1b-2c3d4e5f6a7b")
         """
         if not columns or len(columns) != len(values):
             raise ValueError("Colunas e valores devem ter a mesma quantidade.")
@@ -142,20 +115,26 @@ class Database:
         # Verifica os nomes antes de montar o SQL.
         self.check_names([table] + columns)
 
-        # Um "?" para cada valor, ex: "?, ?, ?"
-        marks = ", ".join(["?"] * len(values))
+        # Gera o id (UUID-4) e coloca como primeira coluna.
+        new_id = str(uuid.uuid4())
+        columns = ["id"] + columns
+        values = [new_id] + values
+
+        # Um "%s" para cada valor, ex: "%s, %s, %s"
+        marks = ", ".join(["%s"] * len(values))
 
         command = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({marks})"
 
         # Os valores vão como parâmetro, nunca no texto do SQL.
-        return self.cmd(command, tuple(values))
+        success, _ = self.cmd(command, tuple(values))
+        return success, new_id
 
     def update_table(self, table: str, columns: list, values: list, where_column: str, where_value) -> tuple[bool, None]:
         """
         Atualiza registros da tabela onde where_column for igual a where_value.
 
         Exemple:
-            update_table("users", ["name"], ["Name User."], "user_id", "ID User")
+            update_table("users", ["name"], ["Name User."], "id", "ID User")
         """
         if not columns or len(columns) != len(values):
             raise ValueError("Colunas e valores devem ter a mesma quantidade.")
@@ -163,10 +142,10 @@ class Database:
         # Verifica os nomes antes de montar o SQL.
         self.check_names([table, where_column] + columns)
 
-        # Monta "coluna1 = ?, coluna2 = ?"
-        sets = ", ".join([f"{column} = ?" for column in columns])
+        # Monta "coluna1 = %s, coluna2 = %s"
+        sets = ", ".join([f"{column} = %s" for column in columns])
 
-        command = f"UPDATE {table} SET {sets} WHERE {where_column} = ?"
+        command = f"UPDATE {table} SET {sets} WHERE {where_column} = %s"
 
         # Os valores vão como parâmetro, nunca no texto do SQL.
         success, _ = self.cmd(command, tuple(values) + (where_value,))
@@ -177,16 +156,16 @@ class Database:
         [ATENÇÃO] Essa função apaga o dado por completo, ela não faz SOFT DELETE.
         Caso queira usar SOFT DELETE, use a função update_table, como no exemplo abaixo:
 
-            update_table("users", ["status"], ["deleted"], "user_id", 1)
+            update_table("users", ["status"], ["deleted"], "id", "ID User")
 
         Exemplo:
-            db.delete_data("users", "user_id", 1)
-            Gera: DELETE FROM users WHERE user_id = ?
+            db.delete_data("users", "id", "ID User")
+            Gera: DELETE FROM users WHERE id = %s
         """
         # Verifica os nomes antes de montar o SQL.
         self.check_names([table, where_column])
 
-        command = f"DELETE FROM {table} WHERE {where_column} = ?"
+        command = f"DELETE FROM {table} WHERE {where_column} = %s"
 
         # O valor vai como parâmetro, nunca no texto do SQL.
         success, _ = self.cmd(command, (where_value,))

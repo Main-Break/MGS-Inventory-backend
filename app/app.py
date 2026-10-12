@@ -8,7 +8,6 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.models.schema import DataSchema
 from app.util.security import create_initial_manager
 from app.config import Config
 
@@ -18,7 +17,6 @@ config = Config()
 # Define o lifespan da aplicação, que é executado no startup e shutdown.
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    DataSchema(config.DB_FILE).migrate()
     create_initial_manager()
     yield
 

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _users() -> DataUser:
-    return DataUser(config.DB_FILE)
+    return DataUser()
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)

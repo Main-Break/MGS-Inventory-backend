@@ -24,7 +24,7 @@ def _get_neural() -> Neural:
 
 
 def _verifications() -> DataVerification:
-    return DataVerification(config.DB_FILE)
+    return DataVerification()
 
 
 def _build_verification(linha: dict) -> dict:
