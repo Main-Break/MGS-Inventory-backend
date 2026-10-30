@@ -1,25 +1,29 @@
 {% extends "base.html" %}
 {% block titulo %}Meu perfil{% endblock %}
 {% block conteudo %}
-    <h1>Meu perfil</h1>
+    <h1 class="h3 mb-4">Meu perfil</h1>
 
-    {% if erro %}
-    <div class="mensagem-erro">{{ erro }}</div>
-    {% endif %}
+    <div class="card" style="max-width: 480px;">
+        <div class="card-body">
+            {% if erro %}
+            <div class="alert alert-danger">{{ erro }}</div>
+            {% endif %}
 
-    <form class="formulario" method="post" action="/app/me">
-        <div class="campo">
-            <label for="name">Nome</label>
-            <input type="text" id="name" name="name" value="{{ usuario.name }}" required>
+            <form method="post" action="/app/me">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ usuario.name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Nova senha (deixe em branco para manter a atual)</label>
+                    <input type="password" class="form-control" id="password" name="password" minlength="8">
+                </div>
+                <button class="btn btn-primary" type="submit">Salvar</button>
+            </form>
         </div>
-        <div class="campo">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
-        </div>
-        <div class="campo">
-            <label for="password">Nova senha (deixe em branco para manter a atual)</label>
-            <input type="password" id="password" name="password" minlength="8">
-        </div>
-        <button class="botao" type="submit">Salvar</button>
-    </form>
+    </div>
 {% endblock %}

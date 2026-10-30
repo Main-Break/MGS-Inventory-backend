@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 {% block titulo %}Materiais{% endblock %}
 {% block conteudo %}
-    <div class="barra-acoes">
-        <h1>Materiais</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Materiais</h1>
         {% if 'materials.create' in usuario.permissions %}
-        <a class="botao" href="/app/materials/novo">Novo material</a>
+        <a class="btn btn-primary" href="/app/materials/novo">Novo material</a>
         {% endif %}
     </div>
 
-    <form method="get" action="/app/materials" class="campo-busca">
-        <input type="text" name="q" placeholder="Buscar por sigla ou nome" value="{{ termo }}">
+    <form method="get" action="/app/materials" class="mb-3" style="max-width: 320px;">
+        <input type="text" class="form-control" name="q" placeholder="Buscar por sigla ou nome" value="{{ termo }}">
     </form>
 
-    <div class="tabela-wrap">
-    <table>
+    <table class="table table-striped table-bordered table-hover bg-white">
         <thead>
             <tr>
                 <th>Sigla</th>
@@ -29,21 +28,25 @@
                 <td>{{ material.code }}</td>
                 <td>{{ material.name }}</td>
                 <td>{{ material.density }}</td>
-                <td><span class="selo {{ material.status }}">{{ material.status }}</span></td>
                 <td>
+                    <span class="badge {{ 'bg-success' if material.status == 'active' else ('bg-secondary' if material.status == 'disable' else 'bg-danger') }}">
+                        {{ material.status }}
+                    </span>
+                </td>
+                <td class="text-end">
                     {% if 'materials.edit' in usuario.permissions %}
-                    <a href="/app/materials/{{ material.id }}/editar">Editar</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="/app/materials/{{ material.id }}/editar">Editar</a>
                     {% endif %}
                     {% if 'materials.status' in usuario.permissions %}
                     {% if material.status == 'active' %}
-                    <form method="post" action="/app/materials/{{ material.id }}/status" style="display:inline">
+                    <form method="post" action="/app/materials/{{ material.id }}/status" class="d-inline">
                         <input type="hidden" name="new_status" value="disable">
-                        <button class="botao secundario" type="submit">Desativar</button>
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Desativar</button>
                     </form>
                     {% else %}
-                    <form method="post" action="/app/materials/{{ material.id }}/status" style="display:inline">
+                    <form method="post" action="/app/materials/{{ material.id }}/status" class="d-inline">
                         <input type="hidden" name="new_status" value="active">
-                        <button class="botao" type="submit">Ativar</button>
+                        <button class="btn btn-sm btn-outline-success" type="submit">Ativar</button>
                     </form>
                     {% endif %}
                     {% endif %}
@@ -52,5 +55,4 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
 {% endblock %}

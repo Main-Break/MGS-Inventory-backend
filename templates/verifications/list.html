@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block titulo %}Verificações{% endblock %}
 {% block conteudo %}
-    <h1>Verificações</h1>
+    <h1 class="h3 mb-4">Verificações</h1>
 
-    <div class="tabela-wrap">
-    <table>
+    <table class="table table-striped table-bordered table-hover bg-white">
         <thead>
             <tr>
                 <th>Foto</th>
@@ -25,23 +24,23 @@
                 </td>
                 <td>
                     {% if verification.approved is none %}
-                    <span class="selo disable">pendente</span>
+                    <span class="badge bg-secondary">pendente</span>
                     {% elif verification.approved %}
-                    <span class="selo active">aprovada</span>
+                    <span class="badge bg-success">aprovada</span>
                     {% else %}
-                    <span class="selo deleted">reprovada</span>
+                    <span class="badge bg-danger">reprovada</span>
                     {% endif %}
                 </td>
                 <td>{{ verification.created_at }}</td>
-                <td>
+                <td class="text-end">
                     {% if verification.approved is none and 'verifications.approve' in usuario.permissions %}
-                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" style="display:inline">
+                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" class="d-inline">
                         <input type="hidden" name="approved" value="true">
-                        <button class="botao" type="submit">Aprovar</button>
+                        <button class="btn btn-sm btn-outline-success" type="submit">Aprovar</button>
                     </form>
-                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" style="display:inline">
+                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" class="d-inline">
                         <input type="hidden" name="approved" value="false">
-                        <button class="botao perigo" type="submit">Reprovar</button>
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Reprovar</button>
                     </form>
                     {% endif %}
                 </td>
@@ -49,5 +48,4 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
 {% endblock %}

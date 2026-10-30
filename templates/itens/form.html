@@ -1,83 +1,98 @@
 {% extends "base.html" %}
 {% block titulo %}Item{% endblock %}
 {% block conteudo %}
-    <h1>{{ "Editar item" if item and item.id else "Novo item" }}</h1>
+    <h1 class="h3 mb-4">{{ "Editar item" if item and item.id else "Novo item" }}</h1>
 
-    {% if erro %}
-    <div class="mensagem-erro">{{ erro }}</div>
-    {% endif %}
+    <div class="card" style="max-width: 640px;">
+        <div class="card-body">
+            {% if erro %}
+            <div class="alert alert-danger">{{ erro }}</div>
+            {% endif %}
 
-    <form class="formulario" method="post" action="{{ '/app/itens/' ~ item.id ~ '/editar' if item and item.id else '/app/itens/novo' }}">
-        <div class="campo">
-            <label for="name">Nome</label>
-            <input type="text" id="name" name="name" value="{{ item.name if item else '' }}" required>
+            <form method="post" action="{{ '/app/itens/' ~ item.id ~ '/editar' if item and item.id else '/app/itens/novo' }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ item.name if item else '' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="label" class="form-label">Label (classe que a IA devolve)</label>
+                        <input type="text" class="form-control" id="label" name="label" value="{{ item.label if item else '' }}" required>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description">{{ item.description if item else '' }}</textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="sku" class="form-label">SKU</label>
+                        <input type="text" class="form-control" id="sku" name="sku" value="{{ item.sku if item and item.sku else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="barcode" class="form-label">Código de barras</label>
+                        <input type="text" class="form-control" id="barcode" name="barcode" value="{{ item.barcode if item and item.barcode else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="brand" class="form-label">Marca</label>
+                        <input type="text" class="form-control" id="brand" name="brand" value="{{ item.brand if item and item.brand else '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="category" class="form-label">Categoria</label>
+                        <input type="text" class="form-control" id="category" name="category" value="{{ item.category if item and item.category else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="material_id" class="form-label">Material</label>
+                        <select class="form-select" id="material_id" name="material_id">
+                            <option value="">(nenhum)</option>
+                            {% for material in materiais %}
+                            <option value="{{ material.id }}" {{ "selected" if item and item.material_id == material.id else "" }}>{{ material.code }} - {{ material.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="unit" class="form-label">Unidade</label>
+                        <input type="text" class="form-control" id="unit" name="unit" value="{{ item.unit if item and item.unit else 'un' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="weight_kg" class="form-label">Peso (kg)</label>
+                        <input type="number" step="0.001" class="form-control" id="weight_kg" name="weight_kg" value="{{ item.weight_kg if item and item.weight_kg else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="stock_quantity" class="form-label">Estoque atual</label>
+                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" value="{{ item.stock_quantity if item and item.stock_quantity else 0 }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="min_stock" class="form-label">Estoque mínimo</label>
+                        <input type="number" class="form-control" id="min_stock" name="min_stock" value="{{ item.min_stock if item and item.min_stock else 0 }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="height_cm" class="form-label">Altura (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="height_cm" name="height_cm" value="{{ item.height_cm if item and item.height_cm else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="width_cm" class="form-label">Largura (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="width_cm" name="width_cm" value="{{ item.width_cm if item and item.width_cm else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="length_cm" class="form-label">Comprimento (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="length_cm" name="length_cm" value="{{ item.length_cm if item and item.length_cm else '' }}">
+                    </div>
+
+                    <div class="col-12">
+                        <label for="location" class="form-label">Localização</label>
+                        <input type="text" class="form-control" id="location" name="location" value="{{ item.location if item and item.location else '' }}">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button class="btn btn-primary" type="submit">Salvar</button>
+                    <a class="btn btn-outline-secondary" href="/app/itens">Cancelar</a>
+                </div>
+            </form>
         </div>
-        <div class="campo">
-            <label for="label">Label (classe que a IA devolve)</label>
-            <input type="text" id="label" name="label" value="{{ item.label if item else '' }}" required>
-        </div>
-        <div class="campo">
-            <label for="description">Descrição</label>
-            <textarea id="description" name="description">{{ item.description if item else '' }}</textarea>
-        </div>
-        <div class="campo">
-            <label for="sku">SKU</label>
-            <input type="text" id="sku" name="sku" value="{{ item.sku if item and item.sku else '' }}">
-        </div>
-        <div class="campo">
-            <label for="barcode">Código de barras</label>
-            <input type="text" id="barcode" name="barcode" value="{{ item.barcode if item and item.barcode else '' }}">
-        </div>
-        <div class="campo">
-            <label for="brand">Marca</label>
-            <input type="text" id="brand" name="brand" value="{{ item.brand if item and item.brand else '' }}">
-        </div>
-        <div class="campo">
-            <label for="category">Categoria</label>
-            <input type="text" id="category" name="category" value="{{ item.category if item and item.category else '' }}">
-        </div>
-        <div class="campo">
-            <label for="material_id">Material</label>
-            <select id="material_id" name="material_id">
-                <option value="">(nenhum)</option>
-                {% for material in materiais %}
-                <option value="{{ material.id }}" {{ "selected" if item and item.material_id == material.id else "" }}>{{ material.code }} - {{ material.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="campo">
-            <label for="unit">Unidade de contagem</label>
-            <input type="text" id="unit" name="unit" value="{{ item.unit if item and item.unit else 'un' }}">
-        </div>
-        <div class="campo">
-            <label for="weight_kg">Peso (kg)</label>
-            <input type="number" step="0.001" id="weight_kg" name="weight_kg" value="{{ item.weight_kg if item and item.weight_kg else '' }}">
-        </div>
-        <div class="campo">
-            <label for="height_cm">Altura (cm)</label>
-            <input type="number" step="0.01" id="height_cm" name="height_cm" value="{{ item.height_cm if item and item.height_cm else '' }}">
-        </div>
-        <div class="campo">
-            <label for="width_cm">Largura (cm)</label>
-            <input type="number" step="0.01" id="width_cm" name="width_cm" value="{{ item.width_cm if item and item.width_cm else '' }}">
-        </div>
-        <div class="campo">
-            <label for="length_cm">Comprimento (cm)</label>
-            <input type="number" step="0.01" id="length_cm" name="length_cm" value="{{ item.length_cm if item and item.length_cm else '' }}">
-        </div>
-        <div class="campo">
-            <label for="stock_quantity">Quantidade em estoque</label>
-            <input type="number" id="stock_quantity" name="stock_quantity" value="{{ item.stock_quantity if item and item.stock_quantity else 0 }}">
-        </div>
-        <div class="campo">
-            <label for="min_stock">Estoque mínimo</label>
-            <input type="number" id="min_stock" name="min_stock" value="{{ item.min_stock if item and item.min_stock else 0 }}">
-        </div>
-        <div class="campo">
-            <label for="location">Localização</label>
-            <input type="text" id="location" name="location" value="{{ item.location if item and item.location else '' }}">
-        </div>
-        <button class="botao" type="submit">Salvar</button>
-        <a href="/app/itens">Cancelar</a>
-    </form>
+    </div>
 {% endblock %}

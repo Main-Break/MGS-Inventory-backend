@@ -2,32 +2,41 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Entrar - Inventário por Foto</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-    <div class="login-pagina">
-        <form class="formulario" method="post" action="/app/login">
-            <h2><span>📦</span> Inventário por Foto</h2>
+<body class="bg-light">
+    <div class="container pagina-login">
+        <div class="card" style="width: 100%; max-width: 380px;">
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <img src="/static/logo-mgs.png" alt="MGS Plásticos" height="40">
+                </div>
+                <h1 class="h5 mb-3 text-center">Inventário por Foto</h1>
 
-            {% if erro %}
-            <div class="mensagem-erro">{{ erro }}</div>
-            {% endif %}
+                {% if erro %}
+                <div class="alert alert-danger">{{ erro }}</div>
+                {% endif %}
 
-            <input type="hidden" name="next" value="{{ next }}">
+                <form method="post" action="/app/login">
+                    <input type="hidden" name="next" value="{{ next }}">
 
-            <div class="campo">
-                <label for="email">E-mail</label>
-                <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ email or '' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+
+                    <button class="btn btn-primary w-100" type="submit">Entrar</button>
+                </form>
             </div>
-
-            <div class="campo">
-                <label for="password">Senha</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-
-            <button class="botao" type="submit">Entrar</button>
-        </form>
+        </div>
     </div>
 </body>
 </html>

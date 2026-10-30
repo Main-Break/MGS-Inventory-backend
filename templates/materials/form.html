@@ -1,30 +1,34 @@
 {% extends "base.html" %}
 {% block titulo %}Material{% endblock %}
 {% block conteudo %}
-    <h1>{{ "Editar material" if material and material.id else "Novo material" }}</h1>
+    <h1 class="h3 mb-4">{{ "Editar material" if material and material.id else "Novo material" }}</h1>
 
-    {% if erro %}
-    <div class="mensagem-erro">{{ erro }}</div>
-    {% endif %}
+    <div class="card" style="max-width: 520px;">
+        <div class="card-body">
+            {% if erro %}
+            <div class="alert alert-danger">{{ erro }}</div>
+            {% endif %}
 
-    <form class="formulario" method="post" action="{{ '/app/materials/' ~ material.id ~ '/editar' if material and material.id else '/app/materials/novo' }}">
-        <div class="campo">
-            <label for="code">Sigla</label>
-            <input type="text" id="code" name="code" maxlength="20" value="{{ material.code if material else '' }}" required>
+            <form method="post" action="{{ '/app/materials/' ~ material.id ~ '/editar' if material and material.id else '/app/materials/novo' }}">
+                <div class="mb-3">
+                    <label for="code" class="form-label">Sigla</label>
+                    <input type="text" class="form-control" id="code" name="code" maxlength="20" value="{{ material.code if material else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nome completo</label>
+                    <input type="text" class="form-control" id="name" name="name" maxlength="100" value="{{ material.name if material else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="density" class="form-label">Densidade (g/cm³)</label>
+                    <input type="number" class="form-control" id="density" name="density" step="0.001" min="0.001" max="999" value="{{ material.density if material else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Observações</label>
+                    <textarea class="form-control" id="description" name="description">{{ material.description if material else '' }}</textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Salvar</button>
+                <a class="btn btn-outline-secondary" href="/app/materials">Cancelar</a>
+            </form>
         </div>
-        <div class="campo">
-            <label for="name">Nome completo</label>
-            <input type="text" id="name" name="name" maxlength="100" value="{{ material.name if material else '' }}" required>
-        </div>
-        <div class="campo">
-            <label for="density">Densidade (g/cm³)</label>
-            <input type="number" id="density" name="density" step="0.001" min="0.001" max="999" value="{{ material.density if material else '' }}" required>
-        </div>
-        <div class="campo">
-            <label for="description">Observações</label>
-            <textarea id="description" name="description">{{ material.description if material else '' }}</textarea>
-        </div>
-        <button class="botao" type="submit">Salvar</button>
-        <a href="/app/materials">Cancelar</a>
-    </form>
+    </div>
 {% endblock %}

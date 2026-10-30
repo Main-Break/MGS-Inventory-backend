@@ -1,33 +1,48 @@
 {% extends "base.html" %}
 {% block titulo %}Dashboard{% endblock %}
 {% block conteudo %}
-    <h1>Dashboard</h1>
+    <h1 class="mb-4">Dashboard</h1>
 
-    <div class="cartoes">
-        <div class="cartao c1">
-            <div class="icone-chip">👤</div>
-            <div class="numero">{{ total_users }}</div>
-            <div class="rotulo">Usuários</div>
+    <div class="row g-3">
+        <div class="col-md-4 col-sm-6">
+            <div class="card cartao-kpi">
+                <div class="card-body">
+                    <div class="valor">{{ total_users }}</div>
+                    <div class="rotulo">Usuários</div>
+                </div>
+            </div>
         </div>
-        <div class="cartao c4">
-            <div class="icone-chip">🧱</div>
-            <div class="numero">{{ total_materials }}</div>
-            <div class="rotulo">Materiais</div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card cartao-kpi">
+                <div class="card-body">
+                    <div class="valor">{{ total_materials }}</div>
+                    <div class="rotulo">Materiais</div>
+                </div>
+            </div>
         </div>
-        <div class="cartao c2">
-            <div class="icone-chip">📦</div>
-            <div class="numero">{{ total_itens }}</div>
-            <div class="rotulo">Itens</div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card cartao-kpi">
+                <div class="card-body">
+                    <div class="valor">{{ total_itens }}</div>
+                    <div class="rotulo">Itens</div>
+                </div>
+            </div>
         </div>
-        <div class="cartao c5">
-            <div class="icone-chip">📸</div>
-            <div class="numero">{{ total_verifications }}</div>
-            <div class="rotulo">Verificações</div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card cartao-kpi">
+                <div class="card-body">
+                    <div class="valor">{{ total_verifications }}</div>
+                    <div class="rotulo">Verificações</div>
+                </div>
+            </div>
         </div>
-        <div class="cartao c3">
-            <div class="icone-chip">⏳</div>
-            <div class="numero">{{ total_pendentes }}</div>
-            <div class="rotulo">Pendentes de aprovação</div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card cartao-kpi border-warning">
+                <div class="card-body">
+                    <div class="valor">{{ total_pendentes }}</div>
+                    <div class="rotulo">Pendentes de aprovação</div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

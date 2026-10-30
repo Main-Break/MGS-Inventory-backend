@@ -1,35 +1,39 @@
 {% extends "base.html" %}
 {% block titulo %}Novo usuário{% endblock %}
 {% block conteudo %}
-    <h1>Novo usuário</h1>
+    <h1 class="h3 mb-4">Novo usuário</h1>
 
-    {% if erro %}
-    <div class="mensagem-erro">{{ erro }}</div>
-    {% endif %}
+    <div class="card" style="max-width: 480px;">
+        <div class="card-body">
+            {% if erro %}
+            <div class="alert alert-danger">{{ erro }}</div>
+            {% endif %}
 
-    <form class="formulario" method="post" action="/app/users/novo">
-        <div class="campo">
-            <label for="name">Nome</label>
-            <input type="text" id="name" name="name" required>
+            <form method="post" action="/app/users/novo">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+                </div>
+                <div class="mb-3">
+                    <label for="role" class="form-label">Função</label>
+                    <select class="form-select" id="role" name="role">
+                        <option value="funcionario">Funcionário</option>
+                        {% if pode_criar_gestor %}
+                        <option value="gestor">Gestor</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">Salvar</button>
+                <a class="btn btn-outline-secondary" href="/app/users">Cancelar</a>
+            </form>
         </div>
-        <div class="campo">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        <div class="campo">
-            <label for="password">Senha</label>
-            <input type="password" id="password" name="password" minlength="8" required>
-        </div>
-        <div class="campo">
-            <label for="role">Função</label>
-            <select id="role" name="role">
-                <option value="funcionario">Funcionário</option>
-                {% if pode_criar_gestor %}
-                <option value="gestor">Gestor</option>
-                {% endif %}
-            </select>
-        </div>
-        <button class="botao" type="submit">Salvar</button>
-        <a href="/app/users">Cancelar</a>
-    </form>
+    </div>
 {% endblock %}

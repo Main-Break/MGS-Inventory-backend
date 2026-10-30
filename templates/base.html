@@ -4,55 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block titulo %}Inventário por Foto{% endblock %}</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-    <div class="layout">
-        {% if usuario %}
-        <aside class="sidebar">
-            <div class="marca">
-                <span class="marca-icone">📦</span>
-                <span class="marca-texto">Inventário</span>
-            </div>
+<body class="bg-light">
+    {% if usuario %}
+    <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/app">
+                <img src="/static/logo-mgs.png" alt="MGS Plásticos" height="32">
+                <span class="text-muted">Inventário por Foto</span>
+            </a>
 
-            <nav class="nav-sidebar">
-                <a href="/app" class="{{ 'ativo' if request.url.path == '/app' else '' }}">
-                    <span class="icone">📊</span> Dashboard
-                </a>
-                <a href="/app/users" class="{{ 'ativo' if request.url.path.startswith('/app/users') else '' }}">
-                    <span class="icone">👤</span> Usuários
-                </a>
-                <a href="/app/materials" class="{{ 'ativo' if request.url.path.startswith('/app/materials') else '' }}">
-                    <span class="icone">🧱</span> Materiais
-                </a>
-                <a href="/app/itens" class="{{ 'ativo' if request.url.path.startswith('/app/itens') else '' }}">
-                    <span class="icone">📦</span> Itens
-                </a>
-                <a href="/app/verifications" class="{{ 'ativo' if request.url.path.startswith('/app/verifications') else '' }}">
-                    <span class="icone">📸</span> Verificações
-                </a>
-            </nav>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="navbar-nav flex-row gap-3">
+                    <a class="nav-link {{ 'active fw-semibold' if request.url.path == '/app' else '' }}" href="/app">Dashboard</a>
+                    <a class="nav-link {{ 'active fw-semibold' if request.url.path.startswith('/app/users') else '' }}" href="/app/users">Usuários</a>
+                    <a class="nav-link {{ 'active fw-semibold' if request.url.path.startswith('/app/materials') else '' }}" href="/app/materials">Materiais</a>
+                    <a class="nav-link {{ 'active fw-semibold' if request.url.path.startswith('/app/itens') else '' }}" href="/app/itens">Itens</a>
+                    <a class="nav-link {{ 'active fw-semibold' if request.url.path.startswith('/app/verifications') else '' }}" href="/app/verifications">Verificações</a>
+                </div>
 
-            <div class="sidebar-rodape">
-                <a class="perfil" href="/app/me">
-                    <span class="avatar">{{ usuario.name[0] | upper }}</span>
-                    <span class="perfil-info">
-                        <span class="perfil-nome">{{ usuario.name }}</span>
-                        <span class="perfil-papel">{{ usuario.role }}</span>
-                    </span>
-                </a>
-                <form method="post" action="/app/logout">
-                    <button class="botao-sair" type="submit">⎋ Sair</button>
-                </form>
+                <div class="d-flex align-items-center gap-2 border-start ps-3">
+                    <a class="text-decoration-none text-dark small" href="/app/me">{{ usuario.name }}</a>
+                    <form method="post" action="/app/logout" class="m-0">
+                        <button class="btn btn-outline-secondary btn-sm" type="submit">Sair</button>
+                    </form>
+                </div>
             </div>
-        </aside>
-        {% endif %}
+        </div>
+    </nav>
+    {% endif %}
 
-        <main class="principal">
-            <div class="conteudo {{ '' if usuario else 'conteudo-solta' }}">
-                {% block conteudo %}{% endblock %}
-            </div>
-        </main>
-    </div>
+    <main class="container {{ 'pb-5' if usuario else '' }}">
+        {% block conteudo %}{% endblock %}
+    </main>
 </body>
 </html>
