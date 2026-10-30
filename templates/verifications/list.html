@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Verificações{% endblock %}
+{% block conteudo %}
+    <h1>Verificações</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Detecções</th>
+                <th>Status</th>
+                <th>Enviada em</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for verification in verifications %}
+            <tr>
+                <td><a href="/app/verifications/foto/{{ verification.photo_filename }}" target="_blank">ver foto</a></td>
+                <td>
+                    {% for detection in verification.detections %}
+                    {{ detection.label }}: {{ detection.count }}{{ "," if not loop.last }}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if verification.approved is none %}
+                    <span class="selo disable">pendente</span>
+                    {% elif verification.approved %}
+                    <span class="selo active">aprovada</span>
+                    {% else %}
+                    <span class="selo deleted">reprovada</span>
+                    {% endif %}
+                </td>
+                <td>{{ verification.created_at }}</td>
+                <td>
+                    {% if verification.approved is none and 'verifications.approve' in usuario.permissions %}
+                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" style="display:inline">
+                        <input type="hidden" name="approved" value="true">
+                        <button class="botao" type="submit">Aprovar</button>
+                    </form>
+                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" style="display:inline">
+                        <input type="hidden" name="approved" value="false">
+                        <button class="botao perigo" type="submit">Reprovar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Materiais{% endblock %}
+{% block conteudo %}
+    <div class="barra-acoes">
+        <h1>Materiais</h1>
+        {% if 'materials.create' in usuario.permissions %}
+        <a class="botao" href="/app/materials/novo">Novo material</a>
+        {% endif %}
+    </div>
+
+    <form method="get" action="/app/materials" class="campo" style="max-width:320px">
+        <input type="text" name="q" placeholder="Buscar por sigla ou nome" value="{{ termo }}">
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sigla</th>
+                <th>Nome</th>
+                <th>Densidade (g/cm³)</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for material in materials %}
+            <tr>
+                <td>{{ material.code }}</td>
+                <td>{{ material.name }}</td>
+                <td>{{ material.density }}</td>
+                <td><span class="selo {{ material.status }}">{{ material.status }}</span></td>
+                <td>
+                    {% if 'materials.edit' in usuario.permissions %}
+                    <a href="/app/materials/{{ material.id }}/editar">Editar</a>
+                    {% endif %}
+                    {% if 'materials.status' in usuario.permissions %}
+                    {% if material.status == 'active' %}
+                    <form method="post" action="/app/materials/{{ material.id }}/status" style="display:inline">
+                        <input type="hidden" name="new_status" value="disable">
+                        <button class="botao secundario" type="submit">Desativar</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="/app/materials/{{ material.id }}/status" style="display:inline">
+                        <input type="hidden" name="new_status" value="active">
+                        <button class="botao" type="submit">Ativar</button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

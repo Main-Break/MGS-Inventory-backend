@@ -19,10 +19,14 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
+from database.migrate import apply_schema
 from models.user import DataUser
 from models.itens import DataItem
 from models.materials import DataMaterial
@@ -30,6 +34,9 @@ from models.permissions import DataPermission
 from models.verification import DataVerification
 from neural.neural import Neural
 from util.security import hash_password, read_token
+
+# Nome do cookie que guarda o token de acesso de quem está logado pela interface web (views/).
+SESSION_COOKIE = "access_token"
 
 
 # ----------------------------------------------------------------------------
@@ -111,14 +118,27 @@ neural = Neural(config.MODEL_PATH)
 _bearer = HTTPBearer(auto_error=False)
 
 
-def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> dict:
+def extract_token(request: Request, credentials: HTTPAuthorizationCredentials | None) -> str | None:
+    """
+    O token chega de dois jeitos possíveis:
+        - header "Authorization: Bearer <token>", usado pela API (routes/, outros sistemas).
+        - cookie SESSION_COOKIE, usado pela interface web (views/), gravado no login em /app/login.
+    """
+    if credentials is not None:
+        return credentials.credentials
+
+    return request.cookies.get(SESSION_COOKIE)
+
+
+def current_user(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> dict:
     """Usado nas rotas que exigem login. Devolve o usuário dono do token."""
     error = HTTPException(status.HTTP_401_UNAUTHORIZED, "Token inválido, expirado ou ausente.")
 
-    if credentials is None:
+    token = extract_token(request, credentials)
+    if token is None:
         raise error
 
-    user_id = read_token(credentials.credentials, config.JWT_SECRET)
+    user_id = read_token(token, config.JWT_SECRET)
     if user_id is None:
         raise error
 
@@ -167,6 +187,11 @@ def require_permission(permission: str):
     return check
 
 
+def web_context(user: dict, **extra) -> dict:
+    """Contexto usado pelos templates (views/): usuário logado, com as permissões, e dados extras da tela."""
+    return {"usuario": {**user, "permissions": user_permissions(user)}, **extra}
+
+
 def create_initial_manager() -> None:
     """Sem isso ninguém consegue entrar na primeira vez, pois só o gestor cadastra usuários."""
     if users.has_manager():
@@ -180,7 +205,8 @@ def create_initial_manager() -> None:
 # ----------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(_api: FastAPI):
-    """Roda uma vez quando o servidor sobe."""
+    """Roda uma vez quando o servidor sobe: garante o esquema do banco e o gestor inicial."""
+    apply_schema(**config.DATABASE)
     create_initial_manager()
     yield
 
@@ -199,6 +225,27 @@ API.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Interface web (views/, templates/, static/): dashboard, cadastros e listagens
+# servidos pelo próprio FastAPI, ao lado da API JSON (routes/) usada por outros sistemas.
+API.mount("/static", StaticFiles(directory=config.BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=config.BASE_DIR / "templates")
+
+
+@API.exception_handler(HTTPException)
+def web_exception_handler(request: Request, error: HTTPException):
+    """
+    As rotas da API (routes/) sempre devolvem JSON em caso de erro.
+    As telas da interface web (views/, prefixo /app) usam a mesma checagem de
+    acesso (current_user, require_permission), mas precisam de uma página, não
+    de um JSON: sem login vai para /app/login, sem permissão mostra o erro.
+    """
+    if request.url.path.startswith("/app"):
+        if error.status_code == status.HTTP_401_UNAUTHORIZED:
+            return RedirectResponse(f"/app/login?next={request.url.path}", status_code=status.HTTP_303_SEE_OTHER)
+        return templates.TemplateResponse(request, "erro.html", {"mensagem": error.detail}, status_code=error.status_code)
+
+    return JSONResponse({"detail": error.detail}, status_code=error.status_code)
 
 
 @API.get("/health", tags=["health"])

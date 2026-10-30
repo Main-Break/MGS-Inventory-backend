@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}Permissões{% endblock %}
+{% block conteudo %}
+    <h1>Permissões de {{ usuario_alvo.name }}</h1>
+
+    {% if usuario_alvo.role == 'gestor' %}
+    <p>Gestor sempre pode tudo, nenhuma permissão extra precisa ser liberada.</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>Permissão</th>
+                <th>Descrição</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chave, descricao in todas_permissoes.items() %}
+            <tr>
+                <td>{{ chave }}</td>
+                <td>{{ descricao }}</td>
+                <td>
+                    {% if chave in concedidas %}
+                    <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/retirar" style="display:inline">
+                        <input type="hidden" name="permission" value="{{ chave }}">
+                        <button class="botao perigo" type="submit">Retirar</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/conceder" style="display:inline">
+                        <input type="hidden" name="permission" value="{{ chave }}">
+                        <button class="botao" type="submit">Liberar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <p><a href="/app/users">Voltar para usuários</a></p>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Usuários{% endblock %}
+{% block conteudo %}
+    <div class="barra-acoes">
+        <h1>Usuários</h1>
+        {% if 'users.create' in usuario.permissions %}
+        <a class="botao" href="/app/users/novo">Novo usuário</a>
+        {% endif %}
+    </div>
+
+    <form method="get" action="/app/users" class="campo" style="max-width:320px">
+        <input type="text" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Função</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registro in users %}
+            <tr>
+                <td>{{ registro.name }}</td>
+                <td>{{ registro.email }}</td>
+                <td>{{ registro.role }}</td>
+                <td><span class="selo {{ registro.status }}">{{ registro.status }}</span></td>
+                <td>
+                    {% if usuario.role == 'gestor' %}
+                    <a href="/app/users/{{ registro.id }}/permissoes">Permissões</a>
+                    {% endif %}
+                    {% if 'users.status' in usuario.permissions %}
+                    {% if registro.status == 'active' %}
+                    <form method="post" action="/app/users/{{ registro.id }}/status" style="display:inline">
+                        <input type="hidden" name="new_status" value="disable">
+                        <button class="botao secundario" type="submit">Desativar</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="/app/users/{{ registro.id }}/status" style="display:inline">
+                        <input type="hidden" name="new_status" value="active">
+                        <button class="botao" type="submit">Ativar</button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

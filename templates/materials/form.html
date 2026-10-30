@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Material{% endblock %}
+{% block conteudo %}
+    <h1>{{ "Editar material" if material and material.id else "Novo material" }}</h1>
+
+    {% if erro %}
+    <div class="mensagem-erro">{{ erro }}</div>
+    {% endif %}
+
+    <form class="formulario" method="post" action="{{ '/app/materials/' ~ material.id ~ '/editar' if material and material.id else '/app/materials/novo' }}">
+        <div class="campo">
+            <label for="code">Sigla</label>
+            <input type="text" id="code" name="code" maxlength="20" value="{{ material.code if material else '' }}" required>
+        </div>
+        <div class="campo">
+            <label for="name">Nome completo</label>
+            <input type="text" id="name" name="name" maxlength="100" value="{{ material.name if material else '' }}" required>
+        </div>
+        <div class="campo">
+            <label for="density">Densidade (g/cm³)</label>
+            <input type="number" id="density" name="density" step="0.001" min="0.001" max="999" value="{{ material.density if material else '' }}" required>
+        </div>
+        <div class="campo">
+            <label for="description">Observações</label>
+            <textarea id="description" name="description">{{ material.description if material else '' }}</textarea>
+        </div>
+        <button class="botao" type="submit">Salvar</button>
+        <a href="/app/materials">Cancelar</a>
+    </form>
+{% endblock %}

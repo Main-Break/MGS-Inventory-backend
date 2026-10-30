@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Meu perfil{% endblock %}
+{% block conteudo %}
+    <h1>Meu perfil</h1>
+
+    {% if erro %}
+    <div class="mensagem-erro">{{ erro }}</div>
+    {% endif %}
+
+    <form class="formulario" method="post" action="/app/me">
+        <div class="campo">
+            <label for="name">Nome</label>
+            <input type="text" id="name" name="name" value="{{ usuario.name }}" required>
+        </div>
+        <div class="campo">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
+        </div>
+        <div class="campo">
+            <label for="password">Nova senha (deixe em branco para manter a atual)</label>
+            <input type="password" id="password" name="password" minlength="8">
+        </div>
+        <button class="botao" type="submit">Salvar</button>
+    </form>
+{% endblock %}

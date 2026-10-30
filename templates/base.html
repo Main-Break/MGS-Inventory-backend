@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block titulo %}Inventário por Foto{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% if usuario %}
+    <div class="topo">
+        <div class="menu">
+            <a href="/app">Dashboard</a>
+            <a href="/app/users">Usuários</a>
+            <a href="/app/materials">Materiais</a>
+            <a href="/app/itens">Itens</a>
+            <a href="/app/verifications">Verificações</a>
+        </div>
+        <div class="menu">
+            <a href="/app/me">{{ usuario.name }} ({{ usuario.role }})</a>
+            <form method="post" action="/app/logout" style="margin:0">
+                <button class="botao secundario" type="submit">Sair</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="conteudo">
+        {% block conteudo %}{% endblock %}
+    </div>
+</body>
+</html>
