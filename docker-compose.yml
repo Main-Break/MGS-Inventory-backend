@@ -1,0 +1,45 @@
+# Deploy de teste, isolado: banco próprio, rede própria. Só o serviço "app"
+# entra também na rede "nginx_default" (já existente no servidor, criada pelo
+# Nginx Proxy Manager), para o proxy reverso conseguir rotear até ele pelo
+# nome do container. Nada aqui se conecta aos outros projetos do servidor.
+#
+# Variáveis vêm do .env (nunca versionado, só existe no servidor de deploy).
+services:
+  app:
+    build: .
+    container_name: MGSInventory
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+    depends_on:
+      - db
+    volumes:
+      - app_data:/app/data
+    networks:
+      - internal
+      - nginx_default
+
+  db:
+    image: mariadb:latest
+    container_name: MGSInventory_DB
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+  nginx_default:
+    external: true
+
+volumes:
+  app_data:
+  db_data:
