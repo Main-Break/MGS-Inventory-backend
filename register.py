@@ -12,7 +12,15 @@ pasta certa e acrescente uma linha aqui. Nenhum outro arquivo precisa mudar.
 from fastapi import FastAPI
 
 from routes import auth, itens, materials, users, verifications
-from views import auth as web_auth, dashboard, itens as web_itens, materials as web_materials, users as web_users, verifications as web_verifications
+from views import (
+    auth as web_auth,
+    dashboard,
+    divergencias,
+    itens as web_itens,
+    materials as web_materials,
+    users as web_users,
+    verifications as web_verifications,
+)
 
 
 def register_routes(api: FastAPI) -> None:
@@ -30,3 +38,4 @@ def register_routes(api: FastAPI) -> None:
     api.include_router(web_materials.router)
     api.include_router(web_itens.router)
     api.include_router(web_verifications.router)
+    api.include_router(divergencias.router)

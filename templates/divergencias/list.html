@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Divergências{% endblock %}
+{% block conteudo %}
+    <h1 class="h3 mb-2">Divergências de estoque</h1>
+    <p class="text-muted mb-3">
+        Itens em que o peso teórico do estoque (peças × peso unitário) diverge do saldo em quilos do ERP
+        em mais de {{ (0.05 * 100) | round(0) }}%, ordenados pelo maior impacto em quilos.
+    </p>
+    <p class="contador-resultados mb-3">{{ divergencias|length }} item(ns) divergente(s)</p>
+
+    {% if divergencias %}
+    <div class="card">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="text-end">Peças</th>
+                    <th class="text-end">Peso unitário (kg)</th>
+                    <th class="text-end">Peso teórico (kg)</th>
+                    <th class="text-end">Saldo ERP (kg)</th>
+                    <th class="text-end">Divergência</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in divergencias %}
+                <tr>
+                    <td>
+                        {{ item.name }}
+                        {% if item.sku %}<br><code class="small">{{ item.sku }}</code>{% endif %}
+                    </td>
+                    <td class="text-end">{{ item.stock_quantity }}</td>
+                    <td class="text-end">{{ item.weight_kg }}</td>
+                    <td class="text-end">{{ item.peso_teorico_kg }}</td>
+                    <td class="text-end">{{ item.stock_kg_erp }}</td>
+                    <td class="text-end">
+                        <span class="badge {{ 'bg-danger' if item.divergencia_kg < 0 else 'bg-warning text-dark' }}">
+                            {{ item.divergencia_kg }} kg ({{ item.divergencia_pct }}%)
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="estado-vazio">
+        <i class="bi bi-check-circle"></i>
+        Nenhuma divergência acima da tolerância. Para um item entrar aqui, ele precisa ter peso
+        unitário e saldo do ERP cadastrados (editar o item, ou importar por planilha).
+    </div>
+    {% endif %}
+{% endblock %}
