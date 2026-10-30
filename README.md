@@ -5,21 +5,19 @@ e fica registrado quem contou o quê.
 
 ## Rodar
 
-Precisa de um banco MySQL ou MariaDB.
+Precisa de um banco MySQL ou MariaDB (só o usuário e os bancos vazios, as
+tabelas são criadas sozinhas na subida, ver `docs/banco-de-dados.md`).
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env    # preencha DB_*, JWT_SECRET e ADMIN_PASSWORD
+cp .env.example .env    # preencha DB_*, DB_NAME_TEST, JWT_SECRET e ADMIN_PASSWORD
 
-# cria as tabelas (o arquivo é aplicado à mão, sempre que mudar)
-mariadb -u USUARIO -p NOME_DO_BANCO < database/database.sql
-
-python main.py          # http://localhost:8000/docs
+python main.py          # http://localhost:8000/docs  (API)  e  http://localhost:8000/app  (interface web)
 ```
 
-Na primeira subida é criado um gestor com o `ADMIN_EMAIL` e o `ADMIN_PASSWORD` do `.env`.
+Na primeira subida é criado um gestor com o `ADMIN_EMAIL` e o `ADMIN_PASSWORD` do `.env`, e o esquema do banco é aplicado sozinho (`database/database.sql`).
 
 Funções administrativas pelo terminal (usuários, itens, verificações, treino):
 
@@ -27,12 +25,22 @@ Funções administrativas pelo terminal (usuários, itens, verificações, trein
 python -m CLI.cli
 ```
 
+## Testes
+
+```bash
+python -m pytest
+```
+
+34 testes de integração, contra o banco de teste (`DB_NAME_TEST` do `.env`),
+cobrindo login, permissões, CRUD de materiais/itens/usuários e verificações.
+
 ## Estrutura
 
 ```
 database/
     database.py      classe mãe Database, o único lugar do projeto com SQL
     database.sql     esquema completo das tabelas
+    migrate.py       aplica o esquema sozinho na subida (ver docs/banco-de-dados.md)
 models/
     user.py          DataUser, tabela users
     permissions.py   DataPermission, permissões extras de cada usuário
@@ -40,7 +48,10 @@ models/
     itens.py         DataItem, tabela itens
     verification.py  DataVerification, tabela verifications
     schemas.py       formato do que entra e sai da API (Pydantic)
-routes/              rotas da API, um arquivo por seção
+routes/              API JSON, para outros sistemas (ERPs) consumirem, um arquivo por seção
+views/               interface web (HTML), prefixo /app, mesmas regras de routes/
+templates/           páginas HTML usadas por views/
+static/              CSS da interface web
 util/
     security.py      senha e token de acesso
 neural/
@@ -51,17 +62,26 @@ data/
     database/        arquivos .db / .sqlite de cache
     backup/          backups do banco
     upload/          fotos enviadas nas verificações
+tests/               testes automatizados (pytest)
+docs/                documentação detalhada (arquitetura, banco, interface web, pendências)
 CLI/cli.py           funções administrativas pelo terminal
 core.py              configurações (.env), objetos compartilhados e o app FastAPI
-register.py          registro das rotas
+register.py          registro das rotas (routes/ e views/)
 main.py              sobe o servidor
 ```
 
 Cada parte só conhece as anteriores:
 
 ```
-database/  ->  models/  ->  core.py  ->  routes/  ->  register.py  ->  main.py
+database/  ->  models/  ->  core.py  ->  routes/ e views/  ->  register.py  ->  main.py
 ```
+
+Documentação detalhada em `docs/`:
+
+- [`docs/arquitetura.md`](docs/arquitetura.md): camadas, padrões usados, como estender.
+- [`docs/banco-de-dados.md`](docs/banco-de-dados.md): esquema e migração automática.
+- [`docs/interface-web.md`](docs/interface-web.md): telas e rotas de `/app`.
+- [`docs/pendencias.md`](docs/pendencias.md): o que ficou de fora desta entrega.
 
 ## Regras do projeto
 
@@ -85,7 +105,9 @@ database/  ->  models/  ->  core.py  ->  routes/  ->  register.py  ->  main.py
   libera permissões, e quem não é gestor nunca cria nem altera um gestor.
 - Senha guardada com PBKDF2-HMAC-SHA256.
 
-## Rotas
+## Rotas da API
+
+(Rotas da interface web, em `/app`, estão em [`docs/interface-web.md`](docs/interface-web.md).)
 
 O login é `POST /auth/login` (e-mail e senha, devolve o token). Todas as outras
 pedem `Authorization: Bearer <token>`, menos `/health`.
