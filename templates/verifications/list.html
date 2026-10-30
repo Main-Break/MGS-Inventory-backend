@@ -2,50 +2,69 @@
 {% block titulo %}Verificações{% endblock %}
 {% block conteudo %}
     <h1 class="h3 mb-4">Verificações</h1>
+    <p class="contador-resultados mb-3">{{ verifications|length }} verificação(ões) encontrada(s)</p>
 
-    <table class="table table-striped table-bordered table-hover bg-white">
-        <thead>
-            <tr>
-                <th>Foto</th>
-                <th>Detecções</th>
-                <th>Status</th>
-                <th>Enviada em</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for verification in verifications %}
-            <tr>
-                <td><a href="/app/verifications/foto/{{ verification.photo_filename }}" target="_blank">ver foto</a></td>
-                <td>
-                    {% for detection in verification.detections %}
-                    {{ detection.label }}: {{ detection.count }}{{ "," if not loop.last }}
-                    {% endfor %}
-                </td>
-                <td>
-                    {% if verification.approved is none %}
-                    <span class="badge bg-secondary">pendente</span>
-                    {% elif verification.approved %}
-                    <span class="badge bg-success">aprovada</span>
-                    {% else %}
-                    <span class="badge bg-danger">reprovada</span>
-                    {% endif %}
-                </td>
-                <td>{{ verification.created_at }}</td>
-                <td class="text-end">
-                    {% if verification.approved is none and 'verifications.approve' in usuario.permissions %}
-                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" class="d-inline">
-                        <input type="hidden" name="approved" value="true">
-                        <button class="btn btn-sm btn-outline-success" type="submit">Aprovar</button>
-                    </form>
-                    <form method="post" action="/app/verifications/{{ verification.id }}/approve" class="d-inline">
-                        <input type="hidden" name="approved" value="false">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Reprovar</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if verifications %}
+    <div class="card">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Detecções</th>
+                    <th>Status</th>
+                    <th>Enviada em</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for verification in verifications %}
+                <tr>
+                    <td>
+                        <a href="/app/verifications/foto/{{ verification.photo_filename }}" target="_blank">
+                            <i class="bi bi-image"></i> ver foto
+                        </a>
+                    </td>
+                    <td>
+                        {% for detection in verification.detections %}
+                        <span class="badge bg-light text-dark border me-1">{{ detection.label }}: {{ detection.count }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if verification.approved is none %}
+                        <span class="badge bg-secondary"><i class="bi bi-hourglass-split"></i> pendente</span>
+                        {% elif verification.approved %}
+                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> aprovada</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-x-lg"></i> reprovada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ verification.created_at }}</td>
+                    <td class="text-end">
+                        {% if verification.approved is none and 'verifications.approve' in usuario.permissions %}
+                        <form method="post" action="/app/verifications/{{ verification.id }}/approve" class="d-inline">
+                            <input type="hidden" name="approved" value="true">
+                            <button class="btn btn-sm btn-outline-success" type="submit" title="Aprovar"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Reprovar"
+                            data-bs-toggle="modal" data-bs-target="#modalConfirmacao"
+                            data-action="/app/verifications/{{ verification.id }}/approve"
+                            data-campo="approved"
+                            data-valor="false"
+                            data-mensagem="Reprovar essa verificação?"
+                            data-botao-texto="Reprovar" data-botao-classe="btn-danger">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="estado-vazio">
+        <i class="bi bi-camera"></i>
+        Nenhuma verificação encontrada.
+    </div>
+    {% endif %}
 {% endblock %}

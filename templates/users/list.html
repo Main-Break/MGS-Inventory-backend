@@ -4,55 +4,84 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Usuários</h1>
         {% if 'users.create' in usuario.permissions %}
-        <a class="btn btn-primary" href="/app/users/novo">Novo usuário</a>
+        <a class="btn btn-primary" href="/app/users/novo"><i class="bi bi-plus-lg"></i> Novo usuário</a>
         {% endif %}
     </div>
 
-    <form method="get" action="/app/users" class="mb-3" style="max-width: 320px;">
-        <input type="text" class="form-control" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
+    <form method="get" action="/app/users" class="mb-2" style="max-width: 320px;">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
+        </div>
     </form>
+    <p class="contador-resultados mb-3">{{ users|length }} usuário(s) encontrado(s)</p>
 
-    <table class="table table-striped table-bordered table-hover bg-white">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>E-mail</th>
-                <th>Função</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for registro in users %}
-            <tr>
-                <td>{{ registro.name }}</td>
-                <td>{{ registro.email }}</td>
-                <td>{{ "Gestor" if registro.role == "gestor" else "Funcionário" }}</td>
-                <td>
-                    <span class="badge {{ 'bg-success' if registro.status == 'active' else ('bg-secondary' if registro.status == 'disable' else 'bg-danger') }}">
-                        {{ registro.status }}
-                    </span>
-                </td>
-                <td class="text-end">
-                    {% if usuario.role == 'gestor' %}
-                    <a class="btn btn-sm btn-outline-primary" href="/app/users/{{ registro.id }}/permissoes">Permissões</a>
-                    {% endif %}
-                    {% if 'users.status' in usuario.permissions %}
-                    {% if registro.status == 'active' %}
-                    <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
-                        <input type="hidden" name="new_status" value="disable">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Desativar</button>
-                    </form>
-                    {% else %}
-                    <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
-                        <input type="hidden" name="new_status" value="active">
-                        <button class="btn btn-sm btn-outline-success" type="submit">Ativar</button>
-                    </form>
-                    {% endif %}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if users %}
+    <div class="card">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Função</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in users %}
+                <tr>
+                    <td><span class="avatar me-2">{{ registro.name[0] | upper }}</span>{{ registro.name }}</td>
+                    <td>{{ registro.email }}</td>
+                    <td>
+                        {% if registro.role == 'gestor' %}
+                        <span class="badge bg-primary-subtle text-primary"><i class="bi bi-star-fill"></i> Gestor</span>
+                        {% else %}
+                        <span class="text-muted">Funcionário</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {{ 'bg-success' if registro.status == 'active' else ('bg-secondary' if registro.status == 'disable' else 'bg-danger') }}">
+                            {{ registro.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        {% if usuario.role == 'gestor' %}
+                        <a class="btn btn-sm btn-outline-primary" href="/app/users/{{ registro.id }}/permissoes" title="Permissões"><i class="bi bi-key"></i></a>
+                        {% endif %}
+                        {% if 'users.status' in usuario.permissions %}
+                        {% if registro.status == 'active' %}
+                        <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
+                            <input type="hidden" name="new_status" value="disable">
+                            <button class="btn btn-sm btn-outline-warning" type="submit" title="Desativar"><i class="bi bi-slash-circle"></i></button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
+                            <input type="hidden" name="new_status" value="active">
+                            <button class="btn btn-sm btn-outline-success" type="submit" title="Ativar"><i class="bi bi-check-circle"></i></button>
+                        </form>
+                        {% endif %}
+                        {% if registro.status != 'deleted' %}
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Apagar"
+                            data-bs-toggle="modal" data-bs-target="#modalConfirmacao"
+                            data-action="/app/users/{{ registro.id }}/status"
+                            data-valor="deleted"
+                            data-mensagem="Apagar o usuário &quot;{{ registro.name }}&quot;? O histórico de verificações feitas por ele continua intacto."
+                            data-botao-texto="Apagar" data-botao-classe="btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="estado-vazio">
+        <i class="bi bi-people"></i>
+        Nenhum usuário encontrado.
+    </div>
+    {% endif %}
 {% endblock %}

@@ -4,39 +4,41 @@
     <h1 class="h3 mb-4">Permissões de {{ usuario_alvo.name }}</h1>
 
     {% if usuario_alvo.role == 'gestor' %}
-    <p class="text-muted">Gestor sempre pode tudo, nenhuma permissão extra precisa ser liberada.</p>
+    <p class="text-muted"><i class="bi bi-star-fill text-primary"></i> Gestor sempre pode tudo, nenhuma permissão extra precisa ser liberada.</p>
     {% else %}
-    <table class="table table-striped table-bordered table-hover bg-white">
-        <thead>
-            <tr>
-                <th>Permissão</th>
-                <th>Descrição</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for chave, descricao in todas_permissoes.items() %}
-            <tr>
-                <td><code>{{ chave }}</code></td>
-                <td>{{ descricao }}</td>
-                <td class="text-end">
-                    {% if chave in concedidas %}
-                    <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/retirar" class="d-inline">
-                        <input type="hidden" name="permission" value="{{ chave }}">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Retirar</button>
-                    </form>
-                    {% else %}
-                    <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/conceder" class="d-inline">
-                        <input type="hidden" name="permission" value="{{ chave }}">
-                        <button class="btn btn-sm btn-outline-success" type="submit">Liberar</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Permissão</th>
+                    <th>Descrição</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chave, descricao in todas_permissoes.items() %}
+                <tr>
+                    <td><code>{{ chave }}</code></td>
+                    <td>{{ descricao }}</td>
+                    <td class="text-end">
+                        {% if chave in concedidas %}
+                        <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/retirar" class="d-inline">
+                            <input type="hidden" name="permission" value="{{ chave }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-dash-circle"></i> Retirar</button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/conceder" class="d-inline">
+                            <input type="hidden" name="permission" value="{{ chave }}">
+                            <button class="btn btn-sm btn-outline-success" type="submit"><i class="bi bi-plus-circle"></i> Liberar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
-    <a href="/app/users">Voltar para usuários</a>
+    <a class="d-inline-block mt-3" href="/app/users"><i class="bi bi-arrow-left"></i> Voltar para usuários</a>
 {% endblock %}

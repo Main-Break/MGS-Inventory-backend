@@ -4,55 +4,83 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Itens</h1>
         {% if 'itens.create' in usuario.permissions %}
-        <a class="btn btn-primary" href="/app/itens/novo">Novo item</a>
+        <a class="btn btn-primary" href="/app/itens/novo"><i class="bi bi-plus-lg"></i> Novo item</a>
         {% endif %}
     </div>
 
-    <form method="get" action="/app/itens" class="mb-3" style="max-width: 320px;">
-        <input type="text" class="form-control" name="q" placeholder="Buscar por nome, label, SKU ou código de barras" value="{{ termo }}">
+    <form method="get" action="/app/itens" class="mb-2" style="max-width: 360px;">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" name="q" placeholder="Buscar por nome, label, SKU ou código de barras" value="{{ termo }}">
+        </div>
     </form>
+    <p class="contador-resultados mb-3">{{ itens|length }} item(ns) encontrado(s)</p>
 
-    <table class="table table-striped table-bordered table-hover bg-white">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Label (IA)</th>
-                <th>Estoque</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in itens %}
-            <tr>
-                <td>{{ item.name }}</td>
-                <td>{{ item.label }}</td>
-                <td>{{ item.stock_quantity }} {{ item.unit }}</td>
-                <td>
-                    <span class="badge {{ 'bg-success' if item.status == 'active' else ('bg-secondary' if item.status == 'disable' else 'bg-danger') }}">
-                        {{ item.status }}
-                    </span>
-                </td>
-                <td class="text-end">
-                    {% if 'itens.edit' in usuario.permissions %}
-                    <a class="btn btn-sm btn-outline-secondary" href="/app/itens/{{ item.id }}/editar">Editar</a>
-                    {% endif %}
-                    {% if 'itens.status' in usuario.permissions %}
-                    {% if item.status == 'active' %}
-                    <form method="post" action="/app/itens/{{ item.id }}/status" class="d-inline">
-                        <input type="hidden" name="new_status" value="disable">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Desativar</button>
-                    </form>
-                    {% else %}
-                    <form method="post" action="/app/itens/{{ item.id }}/status" class="d-inline">
-                        <input type="hidden" name="new_status" value="active">
-                        <button class="btn btn-sm btn-outline-success" type="submit">Ativar</button>
-                    </form>
-                    {% endif %}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if itens %}
+    <div class="card">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Label (IA)</th>
+                    <th>Estoque</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td><code>{{ item.label }}</code></td>
+                    <td>
+                        {{ item.stock_quantity }} {{ item.unit }}
+                        {% if item.stock_quantity <= item.min_stock %}
+                        <span class="badge bg-danger-subtle text-danger ms-1" title="Abaixo do estoque mínimo ({{ item.min_stock }})">baixo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {{ 'bg-success' if item.status == 'active' else ('bg-secondary' if item.status == 'disable' else 'bg-danger') }}">
+                            {{ item.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        {% if 'itens.edit' in usuario.permissions %}
+                        <a class="btn btn-sm btn-outline-secondary" href="/app/itens/{{ item.id }}/editar" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        {% if 'itens.status' in usuario.permissions %}
+                        {% if item.status == 'active' %}
+                        <form method="post" action="/app/itens/{{ item.id }}/status" class="d-inline">
+                            <input type="hidden" name="new_status" value="disable">
+                            <button class="btn btn-sm btn-outline-warning" type="submit" title="Desativar"><i class="bi bi-slash-circle"></i></button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="/app/itens/{{ item.id }}/status" class="d-inline">
+                            <input type="hidden" name="new_status" value="active">
+                            <button class="btn btn-sm btn-outline-success" type="submit" title="Ativar"><i class="bi bi-check-circle"></i></button>
+                        </form>
+                        {% endif %}
+                        {% if item.status != 'deleted' %}
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Apagar"
+                            data-bs-toggle="modal" data-bs-target="#modalConfirmacao"
+                            data-action="/app/itens/{{ item.id }}/status"
+                            data-valor="deleted"
+                            data-mensagem="Apagar o item &quot;{{ item.name }}&quot;? O histórico de verificações continua intacto."
+                            data-botao-texto="Apagar" data-botao-classe="btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="estado-vazio">
+        <i class="bi bi-box-seam"></i>
+        Nenhum item encontrado.
+    </div>
+    {% endif %}
 {% endblock %}
