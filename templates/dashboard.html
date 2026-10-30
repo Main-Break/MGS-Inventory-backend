@@ -3,7 +3,7 @@
 {% block conteudo %}
     <h1 class="h3 mb-4">Dashboard</h1>
 
-    <div class="row g-3">
+    <div class="row g-3 mb-4">
         <div class="col-md-4 col-sm-6">
             <div class="card cartao-kpi h-100">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -59,5 +59,84 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="/app/divergencias" class="text-decoration-none">
+                <div class="card cartao-kpi h-100 {{ 'border-danger' if total_divergencias > 0 else '' }}">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icone-kpi bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div>
+                            <div class="valor">{{ total_divergencias }}</div>
+                            <div class="rotulo">Divergências de peso</div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">Itens por material</h2>
+                    <canvas id="graficoMateriais" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">Verificações por status</h2>
+                    <canvas id="graficoVerificacoes" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">Maiores divergências (kg)</h2>
+                    {% if grafico_divergencias %}
+                    <canvas id="graficoDivergencias" height="220"></canvas>
+                    {% else %}
+                    <p class="text-muted small mb-0">Nenhuma divergência cadastrada ainda.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="/static/vendor/chart.min.js"></script>
+<script>
+    const coresGrafico = ["#4272d7", "#11998e", "#f59e0b", "#7c3aed", "#0891b2", "#ec4899", "#64748b"];
+
+    new Chart(document.getElementById("graficoMateriais"), {
+        type: "bar",
+        data: {
+            labels: {{ grafico_materiais.keys() | list | tojson }},
+            datasets: [{ label: "Itens ativos", data: {{ grafico_materiais.values() | list | tojson }}, backgroundColor: coresGrafico }],
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+
+    new Chart(document.getElementById("graficoVerificacoes"), {
+        type: "doughnut",
+        data: {
+            labels: {{ grafico_verificacoes.keys() | list | tojson }},
+            datasets: [{ data: {{ grafico_verificacoes.values() | list | tojson }}, backgroundColor: ["#64748b", "#11998e", "#ef4444"] }],
+        },
+    });
+
+    {% if grafico_divergencias %}
+    new Chart(document.getElementById("graficoDivergencias"), {
+        type: "bar",
+        data: {
+            labels: {{ grafico_divergencias.keys() | list | tojson }},
+            datasets: [{ label: "Divergência (kg)", data: {{ grafico_divergencias.values() | list | tojson }}, backgroundColor: "#ef4444" }],
+        },
+        options: { indexAxis: "y", plugins: { legend: { display: false } } },
+    });
+    {% endif %}
+</script>
 {% endblock %}
