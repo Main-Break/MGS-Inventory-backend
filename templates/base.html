@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    {% if usuario %}
     <div class="layout">
+        {% if usuario %}
         <aside class="sidebar">
             <div class="marca">
                 <span class="marca-icone">📦</span>
@@ -46,17 +46,13 @@
                 </form>
             </div>
         </aside>
+        {% endif %}
 
         <main class="principal">
-            <div class="conteudo">
+            <div class="conteudo {{ '' if usuario else 'conteudo-solta' }}">
                 {% block conteudo %}{% endblock %}
             </div>
         </main>
     </div>
-    {% else %}
-    <div class="conteudo conteudo-solta">
-        {% block conteudo %}{% endblock %}
-    </div>
-    {% endif %}
 </body>
 </html>
