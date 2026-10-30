@@ -4,11 +4,11 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Materiais</h1>
         {% if 'materials.create' in usuario.permissions %}
-        <a class="btn btn-primary" href="/app/materials/novo"><i class="bi bi-plus-lg"></i> Novo material</a>
+        <a class="btn btn-primary" href="/app/materiais/novo"><i class="bi bi-plus-lg"></i> Novo material</a>
         {% endif %}
     </div>
 
-    <form method="get" action="/app/materials" class="mb-2" style="max-width: 320px;">
+    <form method="get" action="/app/materiais" class="mb-2" style="max-width: 320px;">
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" name="q" placeholder="Buscar por sigla ou nome" value="{{ termo }}">
@@ -41,16 +41,16 @@
                     </td>
                     <td class="text-end">
                         {% if 'materials.edit' in usuario.permissions %}
-                        <a class="btn btn-sm btn-outline-secondary" href="/app/materials/{{ material.id }}/editar" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/app/materiais/{{ material.id }}/editar" title="Editar"><i class="bi bi-pencil"></i></a>
                         {% endif %}
                         {% if 'materials.status' in usuario.permissions %}
                         {% if material.status == 'active' %}
-                        <form method="post" action="/app/materials/{{ material.id }}/status" class="d-inline">
+                        <form method="post" action="/app/materiais/{{ material.id }}/status" class="d-inline">
                             <input type="hidden" name="new_status" value="disable">
                             <button class="btn btn-sm btn-outline-warning" type="submit" title="Desativar"><i class="bi bi-slash-circle"></i></button>
                         </form>
                         {% else %}
-                        <form method="post" action="/app/materials/{{ material.id }}/status" class="d-inline">
+                        <form method="post" action="/app/materiais/{{ material.id }}/status" class="d-inline">
                             <input type="hidden" name="new_status" value="active">
                             <button class="btn btn-sm btn-outline-success" type="submit" title="Ativar"><i class="bi bi-check-circle"></i></button>
                         </form>
@@ -58,7 +58,7 @@
                         {% if material.status != 'deleted' %}
                         <button type="button" class="btn btn-sm btn-outline-danger" title="Apagar"
                             data-bs-toggle="modal" data-bs-target="#modalConfirmacao"
-                            data-action="/app/materials/{{ material.id }}/status"
+                            data-action="/app/materiais/{{ material.id }}/status"
                             data-valor="deleted"
                             data-mensagem="Apagar o material &quot;{{ material.name }}&quot;? O histórico de itens que usam esse material continua intacto."
                             data-botao-texto="Apagar" data-botao-classe="btn-danger">

@@ -4,11 +4,11 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Usuários</h1>
         {% if 'users.create' in usuario.permissions %}
-        <a class="btn btn-primary" href="/app/users/novo"><i class="bi bi-plus-lg"></i> Novo usuário</a>
+        <a class="btn btn-primary" href="/app/usuarios/novo"><i class="bi bi-plus-lg"></i> Novo usuário</a>
         {% endif %}
     </div>
 
-    <form method="get" action="/app/users" class="mb-2" style="max-width: 320px;">
+    <form method="get" action="/app/usuarios" class="mb-2" style="max-width: 320px;">
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
@@ -47,16 +47,16 @@
                     </td>
                     <td class="text-end">
                         {% if usuario.role == 'gestor' %}
-                        <a class="btn btn-sm btn-outline-primary" href="/app/users/{{ registro.id }}/permissoes" title="Permissões"><i class="bi bi-key"></i></a>
+                        <a class="btn btn-sm btn-outline-primary" href="/app/usuarios/{{ registro.id }}/permissoes" title="Permissões"><i class="bi bi-key"></i></a>
                         {% endif %}
                         {% if 'users.status' in usuario.permissions %}
                         {% if registro.status == 'active' %}
-                        <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
+                        <form method="post" action="/app/usuarios/{{ registro.id }}/status" class="d-inline">
                             <input type="hidden" name="new_status" value="disable">
                             <button class="btn btn-sm btn-outline-warning" type="submit" title="Desativar"><i class="bi bi-slash-circle"></i></button>
                         </form>
                         {% else %}
-                        <form method="post" action="/app/users/{{ registro.id }}/status" class="d-inline">
+                        <form method="post" action="/app/usuarios/{{ registro.id }}/status" class="d-inline">
                             <input type="hidden" name="new_status" value="active">
                             <button class="btn btn-sm btn-outline-success" type="submit" title="Ativar"><i class="bi bi-check-circle"></i></button>
                         </form>
@@ -64,7 +64,7 @@
                         {% if registro.status != 'deleted' %}
                         <button type="button" class="btn btn-sm btn-outline-danger" title="Apagar"
                             data-bs-toggle="modal" data-bs-target="#modalConfirmacao"
-                            data-action="/app/users/{{ registro.id }}/status"
+                            data-action="/app/usuarios/{{ registro.id }}/status"
                             data-valor="deleted"
                             data-mensagem="Apagar o usuário &quot;{{ registro.name }}&quot;? O histórico de verificações feitas por ele continua intacto."
                             data-botao-texto="Apagar" data-botao-classe="btn-danger">

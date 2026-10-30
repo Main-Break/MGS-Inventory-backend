@@ -22,12 +22,12 @@
                     <td>{{ descricao }}</td>
                     <td class="text-end">
                         {% if chave in concedidas %}
-                        <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/retirar" class="d-inline">
+                        <form method="post" action="/app/usuarios/{{ usuario_alvo.id }}/permissoes/retirar" class="d-inline">
                             <input type="hidden" name="permission" value="{{ chave }}">
                             <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-dash-circle"></i> Retirar</button>
                         </form>
                         {% else %}
-                        <form method="post" action="/app/users/{{ usuario_alvo.id }}/permissoes/conceder" class="d-inline">
+                        <form method="post" action="/app/usuarios/{{ usuario_alvo.id }}/permissoes/conceder" class="d-inline">
                             <input type="hidden" name="permission" value="{{ chave }}">
                             <button class="btn btn-sm btn-outline-success" type="submit"><i class="bi bi-plus-circle"></i> Liberar</button>
                         </form>
@@ -40,5 +40,5 @@
     </div>
     {% endif %}
 
-    <a class="d-inline-block mt-3" href="/app/users"><i class="bi bi-arrow-left"></i> Voltar para usuários</a>
+    <a class="d-inline-block mt-3" href="/app/usuarios"><i class="bi bi-arrow-left"></i> Voltar para usuários</a>
 {% endblock %}

@@ -17,35 +17,65 @@
                 <span>Inventário</span>
             </a>
 
+            {% set rota = request.url.path %}
+            {% set catalogo_ativo = rota.startswith('/app/materiais') or rota.startswith('/app/itens') %}
+            {% set verificacoes_ativo = rota.startswith('/app/verificacoes') or rota.startswith('/app/divergencias') %}
+
             <ul class="nav flex-column sidebar-nav">
                 <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path == '/app' else '' }}" href="/app">
+                    <a class="nav-link {{ 'active' if rota == '/app' else '' }}" href="/app">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
+
                 <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path.startswith('/app/users') or request.url.path == '/app/me' else '' }}" href="/app/users">
+                    <a class="nav-link nav-link-grupo {{ 'active' if catalogo_ativo else '' }}" data-bs-toggle="collapse" href="#menuCatalogo" role="button" aria-expanded="{{ 'true' if catalogo_ativo else 'false' }}">
+                        <i class="bi bi-boxes"></i> Catálogo <i class="bi bi-chevron-down seta-submenu ms-auto"></i>
+                    </a>
+                    <div class="collapse {{ 'show' if catalogo_ativo else '' }}" id="menuCatalogo">
+                        <ul class="nav flex-column sidebar-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if rota.startswith('/app/materiais') else '' }}" href="/app/materiais">
+                                    <i class="bi bi-bricks"></i> Materiais
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if rota.startswith('/app/itens') else '' }}" href="/app/itens">
+                                    <i class="bi bi-box-seam"></i> Itens
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link nav-link-grupo {{ 'active' if verificacoes_ativo else '' }}" data-bs-toggle="collapse" href="#menuVerificacoes" role="button" aria-expanded="{{ 'true' if verificacoes_ativo else 'false' }}">
+                        <i class="bi bi-camera"></i> Verificações <i class="bi bi-chevron-down seta-submenu ms-auto"></i>
+                    </a>
+                    <div class="collapse {{ 'show' if verificacoes_ativo else '' }}" id="menuVerificacoes">
+                        <ul class="nav flex-column sidebar-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if rota == '/app/verificacoes' else '' }}" href="/app/verificacoes">
+                                    <i class="bi bi-list-ul"></i> Todas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if rota == '/app/verificacoes/nova' else '' }}" href="/app/verificacoes/nova">
+                                    <i class="bi bi-plus-circle"></i> Nova verificação
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if rota.startswith('/app/divergencias') else '' }}" href="/app/divergencias">
+                                    <i class="bi bi-exclamation-triangle"></i> Divergências
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if rota.startswith('/app/usuarios') or rota == '/app/me' else '' }}" href="/app/usuarios">
                         <i class="bi bi-people"></i> Usuários
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path.startswith('/app/materials') else '' }}" href="/app/materials">
-                        <i class="bi bi-bricks"></i> Materiais
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path.startswith('/app/itens') else '' }}" href="/app/itens">
-                        <i class="bi bi-box-seam"></i> Itens
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path.startswith('/app/divergencias') else '' }}" href="/app/divergencias">
-                        <i class="bi bi-exclamation-triangle"></i> Divergências
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.url.path.startswith('/app/verifications') else '' }}" href="/app/verifications">
-                        <i class="bi bi-camera"></i> Verificações
                     </a>
                 </li>
             </ul>

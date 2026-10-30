@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 
 from core import current_user, materials, require_permission, templates, web_context
 
-router = APIRouter(prefix="/app/materials", tags=["interface web"])
+router = APIRouter(prefix="/app/materiais", tags=["interface web"])
 
 
 @router.get("")
@@ -35,7 +35,7 @@ def create_material(
         context = web_context(user, material=data, erro=result)
         return templates.TemplateResponse(request, "materials/form.html", context, status_code=409)
 
-    return RedirectResponse("/app/materials", status_code=303)
+    return RedirectResponse("/app/materiais", status_code=303)
 
 
 @router.get("/{material_id}/editar")
@@ -64,10 +64,10 @@ def update_material(
         context = web_context(user, material={**data, "id": material_id}, erro=result)
         return templates.TemplateResponse(request, "materials/form.html", context, status_code=409)
 
-    return RedirectResponse("/app/materials", status_code=303)
+    return RedirectResponse("/app/materiais", status_code=303)
 
 
 @router.post("/{material_id}/status")
 def set_material_status(material_id: str, new_status: str = Form(...), _user: dict = Depends(require_permission("materials.status"))):
     materials.set_status(material_id, new_status)
-    return RedirectResponse("/app/materials", status_code=303)
+    return RedirectResponse("/app/materiais", status_code=303)

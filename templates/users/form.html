@@ -9,7 +9,7 @@
             <div class="alert alert-danger">{{ erro }}</div>
             {% endif %}
 
-            <form method="post" action="/app/users/novo">
+            <form method="post" action="/app/usuarios/novo">
                 <div class="mb-3">
                     <label for="name" class="form-label">Nome</label>
                     <input type="text" class="form-control" id="name" name="name" required>
@@ -32,7 +32,7 @@
                     </select>
                 </div>
                 <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Salvar</button>
-                <a class="btn btn-outline-secondary" href="/app/users">Cancelar</a>
+                <a class="btn btn-outline-secondary" href="/app/usuarios">Cancelar</a>
             </form>
         </div>
     </div>

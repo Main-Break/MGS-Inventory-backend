@@ -9,7 +9,7 @@
             <div class="alert alert-danger">{{ erro }}</div>
             {% endif %}
 
-            <form method="post" action="{{ '/app/materials/' ~ material.id ~ '/editar' if material and material.id else '/app/materials/novo' }}">
+            <form method="post" action="{{ '/app/materiais/' ~ material.id ~ '/editar' if material and material.id else '/app/materiais/novo' }}">
                 <div class="mb-3">
                     <label for="code" class="form-label">Sigla</label>
                     <input type="text" class="form-control" id="code" name="code" maxlength="20" value="{{ material.code if material else '' }}" required>
@@ -27,7 +27,7 @@
                     <textarea class="form-control" id="description" name="description">{{ material.description if material else '' }}</textarea>
                 </div>
                 <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Salvar</button>
-                <a class="btn btn-outline-secondary" href="/app/materials">Cancelar</a>
+                <a class="btn btn-outline-secondary" href="/app/materiais">Cancelar</a>
             </form>
         </div>
     </div>
