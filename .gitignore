@@ -3,17 +3,17 @@ __pycache__/
 *.pyc
 .env
 *.db
+*.sqlite
 
+# data/: só a estrutura de pastas vai para o Git, o conteúdo (fotos, cache, backups) fica local.
 data/*
 !data/.gitkeep
+!data/train/
+!data/database/
+!data/backup/
+!data/upload/
+data/*/*
+!data/*/.gitkeep
 
-uploads/*
-!uploads/.gitkeep
-!uploads/train
-uploads/train/*
-!uploads/train/.gitkeep
-
-backups/*
-!backups/.gitkeep
-
+# Pesos do modelo treinado (arquivos grandes, ficam fora do Git).
 neural/*.pt
