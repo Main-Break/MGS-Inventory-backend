@@ -7,6 +7,8 @@ sidebar + topbar, que o Bootstrap não traz pronto.
 
 body { font-size: 14.5px; }
 
+.cursor-pointer { cursor: pointer; }
+
 /* ---------------------------------------------------------------- */
 /* Estrutura: sidebar fixa + topbar + conteúdo                      */
 /* ---------------------------------------------------------------- */
