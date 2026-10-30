@@ -1,23 +1,13 @@
 """Verificações: o usuário manda uma foto e a IA conta os itens."""
 
 import json
-import uuid
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
-from core import config, current_user, has_permission, itens, neural, require_permission, verifications
+from core import create_verification_from_photo, current_user, has_permission, require_permission, verifications
 from models.schemas import Detection, VerificationOut
-from neural.neural import ModelUnavailableError, Neural
 
 router = APIRouter(prefix="/verifications", tags=["verifications"])
-
-VALID_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
-
-
-def get_neural() -> Neural:
-    """Entrega a rede neural para a rota. Fica separado para poder ser trocado por uma versão falsa nos testes."""
-    return neural
 
 
 def build_verification(row: dict) -> dict:
@@ -30,36 +20,12 @@ def create_verification(
     file: UploadFile = File(...),
     item_id: str | None = Form(default=None),
     user: dict = Depends(current_user),
-    model: Neural = Depends(get_neural),
 ) -> dict:
-    extension = Path(file.filename or "").suffix.lower()
-    if extension not in VALID_EXTENSIONS:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Extensão de imagem não suportada: '{extension}'.")
-
     content = file.file.read()
-    if not content:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Arquivo de imagem vazio.")
+    status_code, result = create_verification_from_photo(user, item_id, file.filename, content)
 
-    if item_id:
-        exists, message = itens.find_by_id(item_id)
-        if not exists:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, message)
-
-    # O nome do arquivo é gerado aqui, nunca o enviado pelo cliente: evita sobrescrever arquivos
-    # e evita caminhos maliciosos (ex: "../../arquivo").
-    filename = f"{uuid.uuid4().hex}{extension}"
-    photo_path = config.UPLOAD_DIR / filename
-    photo_path.write_bytes(content)
-
-    try:
-        detections = model.count_items(photo_path)
-    except ModelUnavailableError as error:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
-
-    success, result = verifications.create(user["id"], item_id or None, filename, json.dumps(detections))
-
-    if not success:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, result)
+    if status_code != status.HTTP_201_CREATED:
+        raise HTTPException(status_code, result)
     return build_verification(result)
 
 

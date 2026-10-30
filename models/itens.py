@@ -36,6 +36,14 @@ class DataItem(Database):
             return False, "Item não encontrado."
         return True, item
 
+    def find_by_barcode(self, barcode: str) -> tuple[bool, dict | str]:
+        """Usado pelo leitor de código de barras da tela de nova verificação (views/verifications.py)."""
+        success, item = self.select_one(self.TABLE, "barcode", barcode)
+
+        if not success or item is None:
+            return False, "Nenhum item cadastrado com esse código de barras."
+        return True, item
+
     def check_duplicate(self, data: dict, item_id: str | None = None) -> str | None:
         """
         Confere se label, SKU ou código de barras já pertencem a outro item.

@@ -14,7 +14,9 @@ Ordem de dependência do projeto (cada parte só conhece as anteriores):
 """
 
 # Imports
+import json
 import os
+import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -32,8 +34,11 @@ from models.itens import DataItem
 from models.materials import DataMaterial
 from models.permissions import DataPermission
 from models.verification import DataVerification
-from neural.neural import Neural
+from neural.neural import ModelUnavailableError, Neural
 from util.security import hash_password, read_token
+
+# Extensões de imagem aceitas no envio de uma verificação (routes/verifications.py e views/verifications.py).
+VALID_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 # Nome do cookie que guarda o token de acesso de quem está logado pela interface web (views/).
 SESSION_COOKIE = "access_token"
@@ -190,6 +195,47 @@ def require_permission(permission: str):
 def web_context(user: dict, **extra) -> dict:
     """Contexto usado pelos templates (views/): usuário logado, com as permissões, e dados extras da tela."""
     return {"usuario": {**user, "permissions": user_permissions(user)}, **extra}
+
+
+def create_verification_from_photo(user: dict, item_id: str | None, filename: str | None, content: bytes) -> tuple[int, dict | str]:
+    """
+    Valida a extensão, salva a foto, roda o reconhecimento da IA e grava a
+    verificação. Usado tanto pela rota da API (routes/verifications.py::create_verification)
+    quanto pela tela de envio da interface web (views/verifications.py), para essa
+    regra não existir em dois lugares.
+
+    Devolve (status_http, dado): em caso de sucesso, status é 201 e dado é o registro
+    criado; em caso de falha, dado é uma mensagem pronta para mostrar, com o status
+    HTTP correspondente (400, 404 ou 503).
+    """
+    extension = Path(filename or "").suffix.lower()
+    if extension not in VALID_PHOTO_EXTENSIONS:
+        return status.HTTP_400_BAD_REQUEST, f"Extensão de imagem não suportada: '{extension}'."
+
+    if not content:
+        return status.HTTP_400_BAD_REQUEST, "Arquivo de imagem vazio."
+
+    if item_id:
+        exists, message = itens.find_by_id(item_id)
+        if not exists:
+            return status.HTTP_404_NOT_FOUND, message
+
+    # O nome do arquivo é gerado aqui, nunca o enviado pelo cliente: evita sobrescrever
+    # arquivos e evita caminhos maliciosos (ex: "../../arquivo").
+    photo_filename = f"{uuid.uuid4().hex}{extension}"
+    photo_path = config.UPLOAD_DIR / photo_filename
+    photo_path.write_bytes(content)
+
+    try:
+        detections = neural.count_items(photo_path)
+    except ModelUnavailableError as error:
+        return status.HTTP_503_SERVICE_UNAVAILABLE, str(error)
+
+    success, result = verifications.create(user["id"], item_id or None, photo_filename, json.dumps(detections))
+    if not success:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR, result
+
+    return status.HTTP_201_CREATED, result
 
 
 def create_initial_manager() -> None:

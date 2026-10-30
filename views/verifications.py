@@ -2,13 +2,24 @@
 
 import json
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse, RedirectResponse
 
-from core import config, current_user, has_permission, itens, require_permission, templates, users, verifications, web_context
+from core import (
+    config,
+    create_verification_from_photo,
+    current_user,
+    has_permission,
+    itens,
+    require_permission,
+    templates,
+    users,
+    verifications,
+    web_context,
+)
 from models.schemas import Detection
 
-router = APIRouter(prefix="/app/verifications", tags=["interface web"])
+router = APIRouter(prefix="/app/verificacoes", tags=["interface web"])
 
 
 def build_verification(row: dict, users_by_id: dict, itens_by_id: dict) -> dict:
@@ -54,6 +65,36 @@ def get_photo(filename: str, _user: dict = Depends(current_user)) -> FileRespons
     return FileResponse(photo_path)
 
 
+@router.get("/nova")
+def new_verification_form(request: Request, user: dict = Depends(current_user)):
+    _, all_itens = itens.search(None)
+    return templates.TemplateResponse(request, "verifications/nova.html", web_context(user, itens=all_itens))
+
+
+@router.post("/nova")
+def create_verification_view(
+    request: Request,
+    arquivo: UploadFile,
+    item_id: str = Form(""),
+    user: dict = Depends(current_user),
+):
+    """
+    Envio de verificação pela interface web: foto (câmera ou arquivo), com o item
+    identificado por leitura de código de barras, busca manual, ou deixado em
+    branco (a IA tenta reconhecer só pela foto). Mesma regra de routes/verifications.py
+    (core.py::create_verification_from_photo), só a resposta muda: página, não JSON.
+    """
+    content = arquivo.file.read()
+    status_code, result = create_verification_from_photo(user, item_id or None, arquivo.filename, content)
+
+    if status_code != status.HTTP_201_CREATED:
+        _, all_itens = itens.search(None)
+        context = web_context(user, itens=all_itens, erro=result, item_id_selecionado=item_id)
+        return templates.TemplateResponse(request, "verifications/nova.html", context, status_code=status_code)
+
+    return RedirectResponse(f"/app/verificacoes/{result['id']}", status_code=303)
+
+
 @router.get("/{verification_id}")
 def detail_verification(request: Request, verification_id: str, user: dict = Depends(current_user)):
     """Relatório completo de uma verificação: detalhes à esquerda, foto grande à direita."""
@@ -74,4 +115,4 @@ def approve_verification(verification_id: str, approved: bool = Form(...), _user
     success, result = verifications.approve(verification_id, approved)
     if not success:
         raise HTTPException(status.HTTP_404_NOT_FOUND, result)
-    return RedirectResponse(f"/app/verifications/{verification_id}", status_code=303)
+    return RedirectResponse(f"/app/verificacoes/{verification_id}", status_code=303)

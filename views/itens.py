@@ -89,6 +89,15 @@ def calcular_peso(
     return {"peso_kg": peso}
 
 
+@router.get("/buscar-por-codigo")
+def buscar_por_codigo(barcode: str, _user: dict = Depends(current_user)) -> dict:
+    """Usado pelo leitor de código de barras da tela de nova verificação (views/verifications.py)."""
+    exists, item = itens.find_by_barcode(barcode)
+    if not exists:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, item)
+    return {"id": item["id"], "name": item["name"], "label": item["label"]}
+
+
 @router.get("/exportar")
 def exportar_itens(_user: dict = Depends(current_user)) -> Response:
     """Baixa todos os itens em CSV, no mesmo formato aceito pela importação."""

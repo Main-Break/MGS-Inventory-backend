@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block titulo %}Verificações{% endblock %}
 {% block conteudo %}
-    <h1 class="h3 mb-4">Verificações</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Verificações</h1>
+        <a class="btn btn-primary" href="/app/verificacoes/nova"><i class="bi bi-camera"></i> Nova verificação</a>
+    </div>
     <p class="contador-resultados mb-3">{{ verifications|length }} verificação(ões) encontrada(s)</p>
 
     {% if verifications %}
@@ -19,7 +22,7 @@
             </thead>
             <tbody>
                 {% for verification in verifications %}
-                <tr class="cursor-pointer" onclick="window.location='/app/verifications/{{ verification.id }}'">
+                <tr class="cursor-pointer" onclick="window.location='/app/verificacoes/{{ verification.id }}'">
                     <td>{{ verification.user_name }}</td>
                     <td>{{ verification.item_name or "(não informado)" }}</td>
                     <td class="text-end">{{ verification.total_count }}</td>
@@ -34,7 +37,7 @@
                     </td>
                     <td>{{ verification.created_at }}</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-secondary" href="/app/verifications/{{ verification.id }}">
+                        <a class="btn btn-sm btn-outline-secondary" href="/app/verificacoes/{{ verification.id }}">
                             <i class="bi bi-file-earmark-text"></i> Relatório
                         </a>
                     </td>

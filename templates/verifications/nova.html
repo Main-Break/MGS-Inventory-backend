@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block titulo %}Nova verificação{% endblock %}
+{% block conteudo %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Nova verificação</h1>
+        <a class="btn btn-outline-secondary" href="/app/verificacoes"><i class="bi bi-arrow-left"></i> Voltar</a>
+    </div>
+
+    {% if erro %}
+    <div class="alert alert-danger">{{ erro }}</div>
+    {% endif %}
+
+    <!-- Passo 1: como identificar o item. Cards grandes, auto-explicativos. -->
+    <div id="passoMetodo" class="row g-3 mb-2" style="max-width: 900px;">
+        <div class="col-md-4">
+            <button type="button" class="card card-metodo w-100 h-100 text-start border-0 shadow-sm" data-metodo="manual">
+                <div class="card-body">
+                    <i class="bi bi-list-check fs-2 text-primary"></i>
+                    <h2 class="h6 mt-2 mb-1">Selecionar item</h2>
+                    <p class="text-muted small mb-0">Escolho o item na lista, a IA conta pela foto.</p>
+                </div>
+            </button>
+        </div>
+        <div class="col-md-4">
+            <button type="button" class="card card-metodo w-100 h-100 text-start border-0 shadow-sm" data-metodo="codigo">
+                <div class="card-body">
+                    <i class="bi bi-upc-scan fs-2 text-primary"></i>
+                    <h2 class="h6 mt-2 mb-1">Escanear código de barras</h2>
+                    <p class="text-muted small mb-0">A câmera identifica o item, depois a foto conta.</p>
+                </div>
+            </button>
+        </div>
+        <div class="col-md-4">
+            <button type="button" class="card card-metodo w-100 h-100 text-start border-0 shadow-sm" data-metodo="ia">
+                <div class="card-body">
+                    <i class="bi bi-stars fs-2 text-primary"></i>
+                    <h2 class="h6 mt-2 mb-1">Só a foto</h2>
+                    <p class="text-muted small mb-0">A IA identifica o item e conta, tudo pela foto.</p>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Passo 2: aparece depois de escolher o método. -->
+    <div id="passoFormulario" class="card d-none" style="max-width: 480px;">
+        <div class="card-body">
+            <button type="button" class="btn btn-sm btn-link ps-0 mb-2" id="botaoTrocarMetodo"><i class="bi bi-arrow-left"></i> Trocar método</button>
+
+            <form method="post" action="/app/verificacoes/nova" enctype="multipart/form-data" id="formVerificacao">
+                <input type="hidden" id="item_id" name="item_id" value="{{ item_id_selecionado or '' }}">
+
+                <div id="blocoCodigoBarras" class="mb-3 d-none">
+                    <video id="videoScanner" class="w-100 rounded border mb-2" muted playsinline></video>
+                    <div id="avisoScanner" class="small"></div>
+                </div>
+
+                <div id="blocoSelecionarItem" class="mb-3 d-none">
+                    <label for="item_id_select" class="form-label">Item</label>
+                    <select class="form-select" id="item_id_select">
+                        <option value="">(selecione)</option>
+                        {% for item in itens %}
+                        <option value="{{ item.id }}" {{ "selected" if item_id_selecionado == item.id else "" }}>{{ item.name }} {{ "(" ~ item.sku ~ ")" if item.sku }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="itemIdentificado" class="alert alert-success d-none py-2"></div>
+
+                <div id="blocoFoto" class="mb-3 d-none">
+                    <label for="arquivo" class="form-label">Foto do estoque</label>
+                    <input type="file" class="form-control" id="arquivo" name="arquivo" accept="image/*" capture="environment" required>
+                    <img id="previewFoto" class="img-fluid rounded border mt-2 d-none" alt="Pré-visualização da foto">
+                </div>
+
+                <button class="btn btn-primary w-100 d-none" type="submit" id="botaoEnviar"><i class="bi bi-send"></i> Enviar verificação</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="/static/js/verificacao_nova.js"></script>
+{% endblock %}
