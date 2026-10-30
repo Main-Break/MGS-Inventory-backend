@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 # Valores aceitos, os mesmos dos ENUM do banco.
 Role = Literal["gestor", "funcionario"]
 Status = Literal["active", "disable", "deleted"]
+Shape = Literal["bastao_redondo", "bastao_quadrado", "tubo", "chapa"]
 
 
 # ----------------------------------------------------------------------------
@@ -92,15 +93,18 @@ class ItemData(BaseModel):
     category: str | None = Field(default=None, max_length=100, description="Categoria ou grupo do item")
     material_id: str | None = Field(default=None, description="Id do material de que o item é feito (ver /materials)")
 
-    # Medidas físicas
+    # Medidas físicas. shape diz como ler height/width/length no cálculo de peso
+    # (ver util/calculo_peso.py).
     unit: str = Field(default="un", min_length=1, max_length=20, description="Unidade de contagem (un, cx, pct, kg...)")
-    weight_kg: float | None = Field(default=None, ge=0, description="Peso em quilos")
-    height_cm: float | None = Field(default=None, ge=0, description="Altura em centímetros")
-    width_cm: float | None = Field(default=None, ge=0, description="Largura em centímetros")
+    shape: Shape | None = Field(default=None, description="Formato geométrico, usado no cálculo de peso")
+    weight_kg: float | None = Field(default=None, ge=0, description="Peso em quilos (unitário)")
+    height_cm: float | None = Field(default=None, ge=0, description="Altura/espessura/diâmetro interno, em centímetros")
+    width_cm: float | None = Field(default=None, ge=0, description="Largura/diâmetro, em centímetros")
     length_cm: float | None = Field(default=None, ge=0, description="Comprimento em centímetros")
 
     # Estoque
-    stock_quantity: int = Field(default=0, ge=0, description="Quantidade atual")
+    stock_quantity: int = Field(default=0, ge=0, description="Quantidade atual, em peças")
+    stock_kg_erp: float | None = Field(default=None, ge=0, description="Saldo em quilos do ERP, para o batimento de peso")
     min_stock: int = Field(default=0, ge=0, description="Quantidade mínima desejada")
     location: str | None = Field(default=None, max_length=100, description="Onde fica guardado (galpão, prateleira...)")
 

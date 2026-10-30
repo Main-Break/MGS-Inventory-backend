@@ -18,8 +18,19 @@ class DataItem(Database):
     # Colunas que não podem repetir entre itens, com o nome usado na mensagem de erro.
     UNIQUE_COLUMNS = {"label": "label", "sku": "SKU", "barcode": "código de barras"}
 
+    # Diferença entre o peso teórico (peças x peso unitário) e o saldo em quilos do
+    # ERP acima da qual o item entra na fila de divergências (ver list_with_divergence).
+    TOLERANCIA_DIVERGENCIA = 0.05  # 5%
+
     def find_by_id(self, item_id: str) -> tuple[bool, dict | str]:
         success, item = self.select_one(self.TABLE, "id", item_id)
+
+        if not success or item is None:
+            return False, "Item não encontrado."
+        return True, item
+
+    def find_by_sku(self, sku: str) -> tuple[bool, dict | str]:
+        success, item = self.select_one(self.TABLE, "sku", sku)
 
         if not success or item is None:
             return False, "Item não encontrado."
@@ -96,3 +107,52 @@ class DataItem(Database):
         if not term:
             return self.list_all()
         return self.search_data(self.TABLE, ["name", "label", "sku", "barcode"], term, order_by="name")
+
+    def import_row(self, data: dict) -> tuple[bool, dict | str]:
+        """
+        Cria ou atualiza um item a partir de uma linha de planilha (ver
+        views/itens.py, importação por CSV). Atualiza pelo SKU quando ele já existe,
+        cria um item novo quando não existe ou quando a linha não informa SKU.
+        """
+        sku = data.get("sku")
+
+        if sku:
+            exists, existing = self.find_by_sku(sku)
+            if exists:
+                return self.update(existing["id"], data)
+
+        return self.create(data)
+
+    def list_with_divergence(self) -> tuple[bool, list]:
+        """
+        Itens ativos com peso unitário (weight_kg) e saldo do ERP (stock_kg_erp)
+        cadastrados, comparando o peso teórico do estoque (peças x peso unitário)
+        com o saldo em quilos do ERP. Só entra na lista quem passa de
+        TOLERANCIA_DIVERGENCIA, ordenado pelo maior impacto em quilos primeiro.
+        """
+        success, rows = self.select_all(self.TABLE, "status", "active", order_by="name")
+        if not success:
+            return False, []
+
+        result = []
+        for row in rows:
+            if row["weight_kg"] is None or row["stock_kg_erp"] is None:
+                continue
+
+            peso_teorico = float(row["stock_quantity"]) * float(row["weight_kg"])
+            kg_erp = float(row["stock_kg_erp"])
+            divergencia_kg = kg_erp - peso_teorico
+            divergencia_pct = (divergencia_kg / kg_erp) if kg_erp else 0.0
+
+            if abs(divergencia_pct) < self.TOLERANCIA_DIVERGENCIA:
+                continue
+
+            result.append({
+                **row,
+                "peso_teorico_kg": round(peso_teorico, 3),
+                "divergencia_kg": round(divergencia_kg, 3),
+                "divergencia_pct": round(divergencia_pct * 100, 1),
+            })
+
+        result.sort(key=lambda item: abs(item["divergencia_kg"]), reverse=True)
+        return True, result

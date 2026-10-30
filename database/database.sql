@@ -95,15 +95,21 @@ CREATE TABLE IF NOT EXISTS itens (
     category        VARCHAR(100)    NULL,                   -- categoria ou grupo do item
     material_id     CHAR(36)        NULL,                   -- material de que o item é feito
 
-    -- Medidas físicas
+    -- Medidas físicas. shape diz como ler height/width/length no cálculo de peso
+    -- (ver util/calculo_peso.py): bastao_redondo usa width (diâmetro) e length
+    -- (comprimento); bastao_quadrado usa height (lado) e length; tubo usa width
+    -- (diâmetro externo), height (diâmetro interno) e length; chapa usa height
+    -- (espessura), width (largura) e length (comprimento).
     unit            VARCHAR(20)     NOT NULL DEFAULT 'un',  -- unidade de contagem (un, cx, pct, kg...)
-    weight_kg       DECIMAL(10,3)   NULL,                   -- peso em quilos
-    height_cm       DECIMAL(10,2)   NULL,                   -- altura em centímetros
-    width_cm        DECIMAL(10,2)   NULL,                   -- largura em centímetros
+    shape           ENUM('bastao_redondo', 'bastao_quadrado', 'tubo', 'chapa') NULL,
+    weight_kg       DECIMAL(10,3)   NULL,                   -- peso em quilos (unitário)
+    height_cm       DECIMAL(10,2)   NULL,                   -- altura/espessura/diâmetro interno, em centímetros
+    width_cm        DECIMAL(10,2)   NULL,                   -- largura/diâmetro, em centímetros
     length_cm       DECIMAL(10,2)   NULL,                   -- comprimento em centímetros
 
     -- Estoque
-    stock_quantity  INT             NOT NULL DEFAULT 0,     -- quantidade atual
+    stock_quantity  INT             NOT NULL DEFAULT 0,     -- quantidade atual, em peças
+    stock_kg_erp    DECIMAL(12,3)   NULL,                   -- saldo em quilos do ERP (batimento de peso)
     min_stock       INT             NOT NULL DEFAULT 0,     -- quantidade mínima desejada
     location        VARCHAR(100)    NULL,                   -- onde fica guardado (galpão, prateleira...)
 
@@ -117,6 +123,11 @@ CREATE TABLE IF NOT EXISTS itens (
     UNIQUE KEY uk_itens_barcode (barcode),
     CONSTRAINT fk_itens_material FOREIGN KEY (material_id) REFERENCES materials (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Garante shape e stock_kg_erp também em bancos onde a tabela itens já existia
+-- antes dessas colunas (CREATE TABLE IF NOT EXISTS não altera tabela existente).
+ALTER TABLE itens ADD COLUMN IF NOT EXISTS shape ENUM('bastao_redondo', 'bastao_quadrado', 'tubo', 'chapa') NULL AFTER unit;
+ALTER TABLE itens ADD COLUMN IF NOT EXISTS stock_kg_erp DECIMAL(12,3) NULL AFTER stock_quantity;
 
 
 -- ----------------------------------------------------------------------------
