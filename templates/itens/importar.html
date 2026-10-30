@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Importar itens{% endblock %}
+{% block conteudo %}
+    <h1 class="h3 mb-4">Importar itens por planilha</h1>
+
+    {% if criados is defined %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i>
+        {{ criados }} item(ns) criado(s), {{ atualizados }} atualizado(s) (por SKU).
+    </div>
+    {% endif %}
+
+    {% if erros %}
+    <div class="alert alert-warning">
+        <strong>{{ erros|length }} linha(s) com problema:</strong>
+        <ul class="mb-0">
+            {% for erro in erros %}
+            <li>{{ erro }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3" style="max-width: 640px;">
+        <div class="card-body">
+            <p>
+                Arquivo <strong>.csv</strong>, com cabeçalho, colunas separadas por vírgula. Linha com
+                <code>sku</code> já cadastrado atualiza o item; sem SKU, ou com SKU novo, cria um item.
+            </p>
+            <p class="mb-2">Colunas aceitas (nenhuma é obrigatória, exceto <code>name</code> e <code>label</code>):</p>
+            <p class="mb-3"><code>{{ colunas|join(', ') }}</code></p>
+
+            <form method="post" action="/app/itens/importar" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <input type="file" class="form-control" name="arquivo" accept=".csv" required>
+                </div>
+                <button class="btn btn-primary" type="submit"><i class="bi bi-upload"></i> Importar</button>
+                <a class="btn btn-outline-secondary" href="/app/itens">Cancelar</a>
+            </form>
+        </div>
+    </div>
+
+    <a href="/app/itens/exportar"><i class="bi bi-download"></i> Baixar os itens atuais em CSV (serve de modelo)</a>
+{% endblock %}

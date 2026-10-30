@@ -1,5 +1,6 @@
 """CRUD de itens: criar, editar, status (soft delete), label duplicado e material inexistente."""
 
+from core import itens as data_itens
 from tests.conftest import auth_headers
 
 
@@ -66,3 +67,39 @@ def test_muda_status_do_item(client, manager_token):
 
     assert response.status_code == 200
     assert response.json()["status"] == "disable"
+
+
+def test_import_row_cria_item_novo_quando_sku_nao_existe(client):
+    success, item = data_itens.import_row({"name": "Importado", "label": "importado_novo", "sku": "SKU-IMPORT-1", "stock_quantity": 5})
+
+    assert success
+    assert item["sku"] == "SKU-IMPORT-1"
+
+
+def test_import_row_atualiza_pelo_sku_quando_ja_existe(client):
+    data_itens.import_row({"name": "Original", "label": "importado_original", "sku": "SKU-IMPORT-2", "stock_quantity": 5})
+
+    success, atualizado = data_itens.import_row({"name": "Atualizado", "label": "importado_original", "sku": "SKU-IMPORT-2", "stock_quantity": 9})
+
+    assert success
+    assert atualizado["name"] == "Atualizado"
+    assert atualizado["stock_quantity"] == 9
+
+    # Continua sendo um item só, não duplicou.
+    _, todos = data_itens.search("importado_original")
+    assert len(todos) == 1
+
+
+def test_import_row_sem_sku_sempre_cria_item_novo(client):
+    data_itens.import_row({"name": "Sem SKU 1", "label": "sem_sku_1", "stock_quantity": 1})
+    success, item = data_itens.import_row({"name": "Sem SKU 2", "label": "sem_sku_2", "stock_quantity": 1})
+
+    assert success
+    assert item["name"] == "Sem SKU 2"
+
+
+def test_find_by_sku_nao_encontrado(client):
+    success, result = data_itens.find_by_sku("NAO-EXISTE")
+
+    assert not success
+    assert result == "Item não encontrado."
