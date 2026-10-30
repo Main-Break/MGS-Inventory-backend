@@ -105,6 +105,17 @@ Documentação detalhada em `docs/`:
   libera permissões, e quem não é gestor nunca cria nem altera um gestor.
 - Senha guardada com PBKDF2-HMAC-SHA256.
 
+## Batimento por peso
+
+Cada item pode ter um formato geométrico (`shape`) e medidas; o botão
+"Calcular peso" (`GET /app/itens/calcular-peso`, fórmula em
+`util/calculo_peso.py`) usa a densidade do material para sugerir o peso
+unitário. Com o peso unitário e o saldo em quilos do ERP (`stock_kg_erp`,
+digitado ou importado por CSV em `/app/itens/importar`) preenchidos, o
+item entra na fila de divergências (`/app/divergencias`) sempre que o peso
+teórico do estoque (peças × peso unitário) diverge do saldo do ERP acima
+de 5% (`models/itens.py::TOLERANCIA_DIVERGENCIA`).
+
 ## Rotas da API
 
 (Rotas da interface web, em `/app`, estão em [`docs/interface-web.md`](docs/interface-web.md).)

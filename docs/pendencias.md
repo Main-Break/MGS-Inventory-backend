@@ -46,6 +46,17 @@ navegador. Se um dia for necessário enviar foto também pela tela web, dá
 para acrescentar um formulário com `<input type="file">` em
 `views/verifications.py`, chamando a mesma lógica da rota da API.
 
+## Integração direta com o BrERP
+
+O batimento por peso (contagem × peso unitário vs. kg do ERP) e a fila de
+divergências (`/app/divergencias`, `models/itens.py::list_with_divergence`)
+já funcionam, mas o saldo em quilos (`stock_kg_erp`) chega hoje por dois
+caminhos manuais: digitado no formulário do item, ou importado por CSV
+(`/app/itens/importar`). Não existe ainda uma integração direta com o
+BrERP (API, arquivo agendado, etc.) que mantenha esse campo sincronizado
+sozinho. Enquanto isso não existir, alguém precisa exportar o relatório do
+ERP e importar por CSV periodicamente.
+
 ## Front-end separado (histórico)
 
 O projeto já previa, antes desta entrega, um front-end em outro endereço
