@@ -8,10 +8,11 @@
         {% endif %}
     </div>
 
-    <form method="get" action="/app/users" class="campo" style="max-width:320px">
+    <form method="get" action="/app/users" class="campo-busca">
         <input type="text" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
     </form>
 
+    <div class="tabela-wrap">
     <table>
         <thead>
             <tr>
@@ -51,4 +52,5 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 {% endblock %}

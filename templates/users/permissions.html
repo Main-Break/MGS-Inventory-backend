@@ -6,6 +6,7 @@
     {% if usuario_alvo.role == 'gestor' %}
     <p>Gestor sempre pode tudo, nenhuma permissão extra precisa ser liberada.</p>
     {% else %}
+    <div class="tabela-wrap">
     <table>
         <thead>
             <tr>
@@ -36,6 +37,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% endif %}
 
     <p><a href="/app/users">Voltar para usuários</a></p>

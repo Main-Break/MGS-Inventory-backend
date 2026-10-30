@@ -8,10 +8,11 @@
         {% endif %}
     </div>
 
-    <form method="get" action="/app/itens" class="campo" style="max-width:320px">
+    <form method="get" action="/app/itens" class="campo-busca">
         <input type="text" name="q" placeholder="Buscar por nome, label, SKU ou código de barras" value="{{ termo }}">
     </form>
 
+    <div class="tabela-wrap">
     <table>
         <thead>
             <tr>
@@ -51,4 +52,5 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 {% endblock %}

@@ -2,30 +2,61 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block titulo %}Inventário por Foto{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     {% if usuario %}
-    <div class="topo">
-        <div class="menu">
-            <a href="/app">Dashboard</a>
-            <a href="/app/users">Usuários</a>
-            <a href="/app/materials">Materiais</a>
-            <a href="/app/itens">Itens</a>
-            <a href="/app/verifications">Verificações</a>
-        </div>
-        <div class="menu">
-            <a href="/app/me">{{ usuario.name }} ({{ usuario.role }})</a>
-            <form method="post" action="/app/logout" style="margin:0">
-                <button class="botao secundario" type="submit">Sair</button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="marca">
+                <span class="marca-icone">📦</span>
+                <span class="marca-texto">Inventário</span>
+            </div>
 
-    <div class="conteudo">
+            <nav class="nav-sidebar">
+                <a href="/app" class="{{ 'ativo' if request.url.path == '/app' else '' }}">
+                    <span class="icone">📊</span> Dashboard
+                </a>
+                <a href="/app/users" class="{{ 'ativo' if request.url.path.startswith('/app/users') else '' }}">
+                    <span class="icone">👤</span> Usuários
+                </a>
+                <a href="/app/materials" class="{{ 'ativo' if request.url.path.startswith('/app/materials') else '' }}">
+                    <span class="icone">🧱</span> Materiais
+                </a>
+                <a href="/app/itens" class="{{ 'ativo' if request.url.path.startswith('/app/itens') else '' }}">
+                    <span class="icone">📦</span> Itens
+                </a>
+                <a href="/app/verifications" class="{{ 'ativo' if request.url.path.startswith('/app/verifications') else '' }}">
+                    <span class="icone">📸</span> Verificações
+                </a>
+            </nav>
+
+            <div class="sidebar-rodape">
+                <a class="perfil" href="/app/me">
+                    <span class="avatar">{{ usuario.name[0] | upper }}</span>
+                    <span class="perfil-info">
+                        <span class="perfil-nome">{{ usuario.name }}</span>
+                        <span class="perfil-papel">{{ usuario.role }}</span>
+                    </span>
+                </a>
+                <form method="post" action="/app/logout">
+                    <button class="botao-sair" type="submit">⎋ Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="principal">
+            <div class="conteudo">
+                {% block conteudo %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    <div class="conteudo conteudo-solta">
         {% block conteudo %}{% endblock %}
     </div>
+    {% endif %}
 </body>
 </html>
