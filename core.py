@@ -298,3 +298,9 @@ def web_exception_handler(request: Request, error: HTTPException):
 def health_check() -> dict:
     """Rota de saúde, para monitoramento saber se a API está no ar."""
     return {"status": "ok"}
+
+
+@API.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    """Base do site: manda direto para a interface web (login ou dashboard)."""
+    return RedirectResponse("/app")
