@@ -199,7 +199,7 @@ body { font-size: 14.5px; }
 
 @media (max-width: 767px) {
     .login-split { flex-direction: column; }
-    .login-banner { padding: 32px 24px; flex: none; }
+    .login-banner { display: none; }
 }
 
 /* ---------------------------------------------------------------- */
