@@ -63,7 +63,7 @@
                 <div class="card-body">
                     <h2 class="h6 mb-3">Itens reconhecidos pela IA</h2>
                     <div class="table-responsive">
-                        <table class="table table-sm table-striped mb-0">
+                        <table class="table table-sm table-striped tabela-cartoes mb-0">
                             <thead>
                                 <tr>
                                     <th>Label</th>
@@ -74,17 +74,17 @@
                             <tbody>
                                 {% for detection in verification.detections %}
                                 <tr>
-                                    <td><code>{{ detection.label }}</code></td>
-                                    <td class="text-end">{{ detection.count }}</td>
-                                    <td class="text-end">{{ (detection.confidence * 100) | round(1) }}%</td>
+                                    <td data-label="Label"><code>{{ detection.label }}</code></td>
+                                    <td data-label="Contagem">{{ detection.count }}</td>
+                                    <td data-label="Confiança">{{ (detection.confidence * 100) | round(1) }}%</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                             <tfoot>
                                 <tr class="fw-bold">
-                                    <td>Total</td>
-                                    <td class="text-end">{{ verification.total_count }}</td>
-                                    <td></td>
+                                    <td class="sem-rotulo">Total</td>
+                                    <td data-label="Contagem">{{ verification.total_count }}</td>
+                                    <td class="sem-rotulo"></td>
                                 </tr>
                             </tfoot>
                         </table>

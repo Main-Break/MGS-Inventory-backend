@@ -257,6 +257,57 @@ body { font-size: 14.5px; }
     font-size: 13px;
 }
 
+/* Abaixo de 768px a tabela vira uma pilha de cartões (cada <tr> um cartão,
+   cada <td> uma linha "rótulo: valor"), para só ter rolagem vertical - nunca
+   rolagem lateral cortando colunas. O rótulo vem do data-label de cada <td>;
+   quando não faz sentido (ex: coluna de ações) usa a classe "sem-rotulo". */
+@media (max-width: 767px) {
+    .tabela-cartoes thead { display: none; }
+
+    .tabela-cartoes, .tabela-cartoes tbody, .tabela-cartoes tr, .tabela-cartoes td {
+        display: block;
+        width: 100%;
+    }
+
+    .tabela-cartoes tbody tr, .tabela-cartoes tfoot tr {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background-color: var(--bs-body-bg, #fff) !important;
+    }
+
+    .tabela-cartoes td {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4px 12px;
+        border: none;
+        border-bottom: 1px solid var(--bs-border-color-translucent, #f1f1f1);
+        padding: 7px 0;
+        text-align: right;
+    }
+
+    .tabela-cartoes tr > td:last-child { border-bottom: none; }
+
+    .tabela-cartoes td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        text-align: left;
+    }
+
+    .tabela-cartoes td.sem-rotulo {
+        justify-content: flex-end;
+    }
+
+    .tabela-cartoes td.sem-rotulo::before { content: none; }
+}
+
 .estado-vazio {
     text-align: center;
     padding: 48px 16px;

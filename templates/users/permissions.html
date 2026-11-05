@@ -8,7 +8,7 @@
     {% else %}
     <div class="card">
         <div class="table-responsive">
-        <table class="table table-striped table-hover mb-0">
+        <table class="table table-striped table-hover tabela-cartoes mb-0">
             <thead>
                 <tr>
                     <th>Permissão</th>
@@ -19,9 +19,9 @@
             <tbody>
                 {% for chave, descricao in todas_permissoes.items() %}
                 <tr>
-                    <td><code>{{ chave }}</code></td>
-                    <td>{{ descricao }}</td>
-                    <td class="text-end">
+                    <td data-label="Permissão"><code>{{ chave }}</code></td>
+                    <td data-label="Descrição">{{ descricao }}</td>
+                    <td class="text-end sem-rotulo">
                         {% if chave in concedidas %}
                         <form method="post" action="/app/usuarios/{{ usuario_alvo.id }}/permissoes/retirar" class="d-inline">
                             <input type="hidden" name="permission" value="{{ chave }}">

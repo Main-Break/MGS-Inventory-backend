@@ -23,7 +23,7 @@
     {% if itens %}
     <div class="card">
         <div class="table-responsive">
-        <table class="table table-striped table-hover mb-0">
+        <table class="table table-striped table-hover tabela-cartoes mb-0">
             <thead>
                 <tr>
                     <th>Nome</th>
@@ -36,20 +36,20 @@
             <tbody>
                 {% for item in itens %}
                 <tr>
-                    <td>{{ item.name }}</td>
-                    <td><code>{{ item.label }}</code></td>
-                    <td>
+                    <td data-label="Nome">{{ item.name }}</td>
+                    <td data-label="Label (IA)"><code>{{ item.label }}</code></td>
+                    <td data-label="Estoque">
                         {{ item.stock_quantity }} {{ item.unit }}
                         {% if item.stock_quantity <= item.min_stock %}
                         <span class="badge bg-danger-subtle text-danger ms-1" title="Abaixo do estoque mínimo ({{ item.min_stock }})">baixo</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="badge {{ 'bg-success' if item.status == 'active' else ('bg-secondary' if item.status == 'disable' else 'bg-danger') }}">
                             {{ item.status }}
                         </span>
                     </td>
-                    <td class="text-end">
+                    <td class="text-end sem-rotulo">
                         {% if 'itens.edit' in usuario.permissions %}
                         <a class="btn btn-sm btn-outline-secondary" href="/app/itens/{{ item.id }}/editar" title="Editar"><i class="bi bi-pencil"></i></a>
                         {% endif %}
