@@ -37,15 +37,6 @@ e `templates/users/form.html`.
 (`mariadb-dump`) ainda não é automático. Fica como próximo passo: um
 comando no CLI, ou uma tarefa agendada no servidor.
 
-## Upload de foto pela interface web
-
-A interface web (`/app/verifications`) só lista e aprova verificações já
-enviadas. O envio da foto continua sendo feito por `POST /verifications`
-na API, pensado para um app/dispositivo que tira a foto, não para o
-navegador. Se um dia for necessário enviar foto também pela tela web, dá
-para acrescentar um formulário com `<input type="file">` em
-`views/verifications.py`, chamando a mesma lógica da rota da API.
-
 ## Integração direta com o BrERP
 
 O batimento por peso (contagem × peso unitário vs. kg do ERP) e a fila de
