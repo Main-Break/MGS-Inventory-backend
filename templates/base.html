@@ -85,14 +85,21 @@
             </div>
         </nav>
 
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
         <div class="app-main">
             <header class="topbar">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="/app">Início</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">{{ self.titulo() }}</li>
-                    </ol>
-                </nav>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-light d-md-none" id="botaoMenuMobile" aria-label="Abrir menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="/app">Início</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ self.titulo() }}</li>
+                        </ol>
+                    </nav>
+                </div>
 
                 <div class="dropdown">
                     <button class="btn btn-light d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">

@@ -7,7 +7,35 @@ templates/base.html) e o botão "Calcular peso" do formulário de item
 document.addEventListener("DOMContentLoaded", function () {
     iniciarModalConfirmacao();
     iniciarCalculoPeso();
+    iniciarMenuMobile();
 });
+
+
+function iniciarMenuMobile() {
+    // Em telas estreitas a sidebar (templates/base.html) some fora da tela (ver
+    // static/style.css) e só aparece com a classe "sidebar-aberta", alternada por
+    // este botão ou pelo fundo escurecido atrás dela.
+    var botao = document.getElementById("botaoMenuMobile");
+    var sidebar = document.querySelector(".sidebar");
+    var backdrop = document.getElementById("sidebarBackdrop");
+    if (!botao || !sidebar || !backdrop) return;
+
+    function fechar() {
+        sidebar.classList.remove("sidebar-aberta");
+        backdrop.classList.remove("sidebar-aberta");
+    }
+
+    botao.addEventListener("click", function () {
+        sidebar.classList.add("sidebar-aberta");
+        backdrop.classList.add("sidebar-aberta");
+    });
+
+    backdrop.addEventListener("click", fechar);
+
+    sidebar.querySelectorAll(".nav-link:not(.nav-link-grupo)").forEach(function (link) {
+        link.addEventListener("click", fechar);
+    });
+}
 
 
 function iniciarModalConfirmacao() {
