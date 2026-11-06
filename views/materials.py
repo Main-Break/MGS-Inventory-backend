@@ -3,15 +3,17 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from core import current_user, materials, require_permission, templates, web_context
+from core import current_user, materials, require_permission, templates, total_paginas, web_context
 
 router = APIRouter(prefix="/app/materiais", tags=["interface web"])
 
 
 @router.get("")
-def list_materials(request: Request, q: str | None = None, user: dict = Depends(current_user)):
-    _, result = materials.search(q)
-    return templates.TemplateResponse(request, "materials/list.html", web_context(user, materials=result, termo=q or ""))
+def list_materials(request: Request, q: str | None = None, page: int = 1, user: dict = Depends(current_user)):
+    _, result, total = materials.search_page(q, page=page)
+    return templates.TemplateResponse(request, "materials/list.html", web_context(
+        user, materials=result, termo=q or "", pagina_atual=page, total_paginas=total_paginas(total), total_registros=total,
+    ))
 
 
 @router.get("/novo")

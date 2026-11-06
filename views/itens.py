@@ -6,7 +6,7 @@ import io
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import RedirectResponse, Response
 
-from core import current_user, itens, materials, require_permission, templates, web_context
+from core import current_user, itens, materials, require_permission, templates, total_paginas, web_context
 from util.calculo_peso import SHAPES, peso_kg
 
 router = APIRouter(prefix="/app/itens", tags=["interface web"])
@@ -44,9 +44,11 @@ def form_context(user: dict, item: dict | None, erro: str | None = None) -> dict
 
 
 @router.get("")
-def list_itens(request: Request, q: str | None = None, user: dict = Depends(current_user)):
-    _, result = itens.search(q)
-    return templates.TemplateResponse(request, "itens/list.html", web_context(user, itens=result, termo=q or ""))
+def list_itens(request: Request, q: str | None = None, page: int = 1, user: dict = Depends(current_user)):
+    _, result, total = itens.search_page(q, page=page)
+    return templates.TemplateResponse(request, "itens/list.html", web_context(
+        user, itens=result, termo=q or "", pagina_atual=page, total_paginas=total_paginas(total), total_registros=total,
+    ))
 
 
 @router.get("/novo")

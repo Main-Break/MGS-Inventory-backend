@@ -84,3 +84,9 @@ class DataMaterial(Database):
         if not term:
             return self.list_all()
         return self.search_data(self.TABLE, ["code", "name"], term, order_by="code")
+
+    def search_page(self, term: str | None, page: int = 1) -> tuple[bool, list, int]:
+        """Como search, mas devolve só uma página (ver database/database.py::select_page)."""
+        if not term:
+            return self.select_page(self.TABLE, order_by="code", page=page)
+        return self.search_page_data(self.TABLE, ["code", "name"], term, order_by="code", page=page)

@@ -1,0 +1,24 @@
+{# Paginação reaproveitada pelas listagens (ver core.py::pagina_links e total_paginas).
+   Espera no contexto: pagina_atual (int) e total_paginas (int). Preserva os outros
+   parâmetros da URL (ex: busca "q", filtros), só troca o "page". #}
+{% if total_paginas > 1 %}
+<nav aria-label="Paginação" class="mt-3">
+    <ul class="pagination pagination-sm mb-0 flex-wrap">
+        <li class="page-item {{ 'disabled' if pagina_atual <= 1 else '' }}">
+            <a class="page-link" href="{{ request.url.include_query_params(page=pagina_atual - 1) }}">Anterior</a>
+        </li>
+        {% for p in pagina_links(pagina_atual, total_paginas) %}
+        {% if p == "..." %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% else %}
+        <li class="page-item {{ 'active' if p == pagina_atual else '' }}">
+            <a class="page-link" href="{{ request.url.include_query_params(page=p) }}">{{ p }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if pagina_atual >= total_paginas else '' }}">
+            <a class="page-link" href="{{ request.url.include_query_params(page=pagina_atual + 1) }}">Próxima</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}

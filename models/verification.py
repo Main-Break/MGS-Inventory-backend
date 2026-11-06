@@ -39,6 +39,38 @@ class DataVerification(Database):
     def list_by_user(self, user_id: str) -> tuple[bool, list]:
         return self.select_all(self.TABLE, "user_id", user_id, order_by="created_at", descending=True)
 
+    def search_page(
+            self,
+            page: int = 1,
+            user_id: str | None = None,
+            item_id: str | None = None,
+            status: str | None = None,
+            data_de: str | None = None,
+            data_ate: str | None = None,
+        ) -> tuple[bool, list, int]:
+        """
+        Lista verificações paginada, com filtro opcional por usuário, item, status
+        ("pendente", "aprovada" ou "reprovada") e período de envio.
+        """
+        conditions = []
+
+        if user_id:
+            conditions.append(("user_id", "=", user_id))
+        if item_id:
+            conditions.append(("item_id", "=", item_id))
+        if status == "pendente":
+            conditions.append(("approved", "IS NULL", None))
+        elif status == "aprovada":
+            conditions.append(("approved", "=", 1))
+        elif status == "reprovada":
+            conditions.append(("approved", "=", 0))
+        if data_de:
+            conditions.append(("created_at", ">=", f"{data_de} 00:00:00"))
+        if data_ate:
+            conditions.append(("created_at", "<=", f"{data_ate} 23:59:59"))
+
+        return self.select_filtered(self.TABLE, conditions, order_by="created_at", descending=True, page=page)
+
     def approve(self, verification_id: str, approved: bool) -> tuple[bool, dict | str]:
         exists, message = self.find_by_id(verification_id)
         if not exists:

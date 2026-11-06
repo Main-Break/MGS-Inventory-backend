@@ -14,7 +14,7 @@
             <input type="text" class="form-control" name="q" placeholder="Buscar por nome ou e-mail" value="{{ termo }}">
         </div>
     </form>
-    <p class="contador-resultados mb-3">{{ users|length }} usuário(s) encontrado(s)</p>
+    <p class="contador-resultados mb-3">{{ total_registros }} usuário(s) encontrado(s)</p>
 
     {% if users %}
     <div class="card">
@@ -43,7 +43,7 @@
                     </td>
                     <td data-label="Status">
                         <span class="badge {{ 'bg-success' if registro.status == 'active' else ('bg-secondary' if registro.status == 'disable' else 'bg-danger') }}">
-                            {{ registro.status }}
+                            {{ registro.status | status_pt }}
                         </span>
                     </td>
                     <td class="text-end sem-rotulo">
@@ -80,6 +80,7 @@
         </table>
         </div>
     </div>
+    {% include "_paginacao.html" %}
     {% else %}
     <div class="estado-vazio">
         <i class="bi bi-people"></i>

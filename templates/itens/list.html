@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block titulo %}Itens{% endblock %}
 {% block conteudo %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h3 mb-0">Itens</h1>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="/app/itens/exportar"><i class="bi bi-download"></i> Exportar</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-sm btn-outline-secondary" href="/app/itens/exportar"><i class="bi bi-download"></i> Exportar</a>
             {% if 'itens.create' in usuario.permissions %}
-            <a class="btn btn-outline-secondary" href="/app/itens/importar"><i class="bi bi-upload"></i> Importar</a>
-            <a class="btn btn-primary" href="/app/itens/novo"><i class="bi bi-plus-lg"></i> Novo item</a>
+            <a class="btn btn-sm btn-outline-secondary" href="/app/itens/importar"><i class="bi bi-upload"></i> Importar</a>
+            <a class="btn btn-sm btn-primary" href="/app/itens/novo"><i class="bi bi-plus-lg"></i> Novo item</a>
             {% endif %}
         </div>
     </div>
@@ -18,7 +18,7 @@
             <input type="text" class="form-control" name="q" placeholder="Buscar por nome, label, SKU ou código de barras" value="{{ termo }}">
         </div>
     </form>
-    <p class="contador-resultados mb-3">{{ itens|length }} item(ns) encontrado(s)</p>
+    <p class="contador-resultados mb-3">{{ total_registros }} item(ns) encontrado(s)</p>
 
     {% if itens %}
     <div class="card">
@@ -46,7 +46,7 @@
                     </td>
                     <td data-label="Status">
                         <span class="badge {{ 'bg-success' if item.status == 'active' else ('bg-secondary' if item.status == 'disable' else 'bg-danger') }}">
-                            {{ item.status }}
+                            {{ item.status | status_pt }}
                         </span>
                     </td>
                     <td class="text-end sem-rotulo">
@@ -83,6 +83,7 @@
         </table>
         </div>
     </div>
+    {% include "_paginacao.html" %}
     {% else %}
     <div class="estado-vazio">
         <i class="bi bi-box-seam"></i>

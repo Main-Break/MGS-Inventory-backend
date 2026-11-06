@@ -10,7 +10,7 @@ porque a API também não tem essa operação).
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
-from core import current_manager, current_user, require_permission, templates, user_permissions, users, permissions as permissions_model, web_context
+from core import current_manager, current_user, require_permission, templates, total_paginas, user_permissions, users, permissions as permissions_model, web_context
 from models.permissions import DataPermission
 from util.security import hash_password
 
@@ -18,9 +18,11 @@ router = APIRouter(prefix="/app", tags=["interface web"])
 
 
 @router.get("/usuarios")
-def list_users(request: Request, q: str | None = None, user: dict = Depends(require_permission("users.list"))):
-    _, result = users.search(q)
-    return templates.TemplateResponse(request, "users/list.html", web_context(user, users=result, termo=q or ""))
+def list_users(request: Request, q: str | None = None, page: int = 1, user: dict = Depends(require_permission("users.list"))):
+    _, result, total = users.search_page(q, page=page)
+    return templates.TemplateResponse(request, "users/list.html", web_context(
+        user, users=result, termo=q or "", pagina_atual=page, total_paginas=total_paginas(total), total_registros=total,
+    ))
 
 
 @router.get("/usuarios/novo")

@@ -58,8 +58,12 @@ Por isso, se uma regra de permissão mudar, ela muda em um lugar só
 
 - **Repository**: `Database` (em `database/database.py`) expõe operações
   genéricas (`insert_table`, `update_table`, `delete_data`, `select_one`,
-  `select_all`, `search_data`) e cada model (`DataUser`, `DataItem`...) usa
-  essas operações para a sua tabela, sem escrever SQL novo.
+  `select_all`, `search_data`, `select_page`, `search_page_data`,
+  `select_filtered`) e cada model (`DataUser`, `DataItem`...) usa essas
+  operações para a sua tabela, sem escrever SQL novo. As três últimas são
+  paginadas (LIMIT/OFFSET, `Database.PAGE_SIZE`) e devolvem também o total de
+  registros, usado nas listagens da interface web (ver
+  `templates/_paginacao.html` e `core.py::pagina_links`/`total_paginas`).
 - **Dependency Injection**: o FastAPI injeta `current_user`,
   `require_permission("...")` etc. nas rotas via `Depends(...)`. A rota não
   sabe como o token é lido ou como a permissão é checada, só declara o que

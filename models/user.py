@@ -53,6 +53,12 @@ class DataUser(Database):
             return self.list_all()
         return self.search_data(self.TABLE, ["name", "email"], term, order_by="name")
 
+    def search_page(self, term: str | None, page: int = 1) -> tuple[bool, list, int]:
+        """Como search, mas devolve só uma página (ver database/database.py::select_page)."""
+        if not term:
+            return self.select_page(self.TABLE, order_by="name", page=page)
+        return self.search_page_data(self.TABLE, ["name", "email"], term, order_by="name", page=page)
+
     def update(self, user_id: str, name: str, email: str, password_hash: str) -> tuple[bool, dict | str]:
         # O novo e-mail não pode pertencer a outro usuário.
         exists, other = self.find_by_email(email)

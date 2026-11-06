@@ -6,7 +6,7 @@
         Itens em que o peso teórico do estoque (peças × peso unitário) diverge do saldo em quilos do ERP
         em mais de {{ (0.05 * 100) | round(0) }}%, ordenados pelo maior impacto em quilos.
     </p>
-    <p class="contador-resultados mb-3">{{ divergencias|length }} item(ns) divergente(s)</p>
+    <p class="contador-resultados mb-3">{{ total_registros }} item(ns) divergente(s)</p>
 
     {% if divergencias %}
     <div class="card">
@@ -44,6 +44,7 @@
         </table>
         </div>
     </div>
+    {% include "_paginacao.html" %}
     {% else %}
     <div class="estado-vazio">
         <i class="bi bi-check-circle"></i>

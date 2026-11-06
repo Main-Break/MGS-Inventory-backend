@@ -14,7 +14,7 @@
             <input type="text" class="form-control" name="q" placeholder="Buscar por sigla ou nome" value="{{ termo }}">
         </div>
     </form>
-    <p class="contador-resultados mb-3">{{ materials|length }} material(is) encontrado(s)</p>
+    <p class="contador-resultados mb-3">{{ total_registros }} material(is) encontrado(s)</p>
 
     {% if materials %}
     <div class="card">
@@ -37,7 +37,7 @@
                     <td data-label="Densidade (g/cm³)">{{ material.density }}</td>
                     <td data-label="Status">
                         <span class="badge {{ 'bg-success' if material.status == 'active' else ('bg-secondary' if material.status == 'disable' else 'bg-danger') }}">
-                            {{ material.status }}
+                            {{ material.status | status_pt }}
                         </span>
                     </td>
                     <td class="text-end sem-rotulo">
@@ -74,6 +74,7 @@
         </table>
         </div>
     </div>
+    {% include "_paginacao.html" %}
     {% else %}
     <div class="estado-vazio">
         <i class="bi bi-bricks"></i>

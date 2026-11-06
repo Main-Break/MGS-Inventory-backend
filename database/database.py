@@ -10,6 +10,9 @@ Os models (pasta models/) herdam desta classe e usam apenas as funções abaixo:
     select_one    -> SELECT de um registro
     select_all    -> SELECT de vários registros
     search_data   -> SELECT com busca por texto (LIKE)
+    select_page   -> SELECT paginado (LIMIT/OFFSET) + total de registros
+    search_page_data -> busca por texto (LIKE) paginada + total de registros
+    select_filtered  -> SELECT paginado com vários filtros (=, LIKE, >=, <=, IS NULL)
 
 Assim, se um dia a forma de falar com o banco mudar, só este arquivo muda.
 
@@ -249,3 +252,127 @@ class Database:
 
         success, result = self.cmd(command, params, fetch="all")
         return success, result if success else []
+
+    PAGE_SIZE = 50
+
+    def select_page(
+            self,
+            table: str,
+            where_column: str = None,
+            where_value=None,
+            order_by: str = None,
+            descending: bool = False,
+            page: int = 1,
+        ) -> tuple[bool, list, int]:
+        """
+        Como select_all, mas devolve só uma página de registros (LIMIT/OFFSET) e
+        também o total de registros (ignorando a página), para montar a paginação.
+
+        Exemplo:
+            select_page("materials", order_by="code", page=2)
+            Gera: SELECT COUNT(*) AS total FROM materials
+                  SELECT * FROM materials ORDER BY code LIMIT 50 OFFSET 50
+        """
+        self.check_names([table])
+
+        where = ""
+        params = ()
+        if where_column:
+            self.check_names([where_column])
+            where = f" WHERE {where_column} = %s"
+            params = (where_value,)
+
+        success, total_row = self.cmd(f"SELECT COUNT(*) AS total FROM {table}{where}", params, fetch="one")
+        total = total_row["total"] if success and total_row else 0
+
+        command = f"SELECT * FROM {table}{where}"
+        if order_by:
+            self.check_names([order_by])
+            command += f" ORDER BY {order_by}"
+            if descending:
+                command += " DESC"
+        command += " LIMIT %s OFFSET %s"
+
+        offset = (max(page, 1) - 1) * self.PAGE_SIZE
+        success, rows = self.cmd(command, params + (self.PAGE_SIZE, offset), fetch="all")
+        return success, (rows if success else []), total
+
+    def select_filtered(
+            self,
+            table: str,
+            conditions: list[tuple] = None,
+            order_by: str = None,
+            descending: bool = False,
+            page: int = 1,
+        ) -> tuple[bool, list, int]:
+        """
+        Busca paginada com vários filtros ao mesmo tempo, cada um numa tupla
+        (coluna, operador, valor). Operador em "=", "LIKE", ">=", "<=", "IS NULL"
+        (nesse último o valor é ignorado).
+
+        Exemplo:
+            select_filtered(
+                "verifications",
+                [("user_id", "=", "ID User"), ("created_at", ">=", "2026-01-01 00:00:00")],
+                order_by="created_at", descending=True,
+            )
+            Gera: SELECT * FROM verifications WHERE user_id = %s AND created_at >= %s ...
+        """
+        self.check_names([table])
+
+        operadores_validos = {"=", "LIKE", ">=", "<=", "IS NULL"}
+        where_parts = []
+        params = []
+
+        for column, operator, value in (conditions or []):
+            self.check_names([column])
+            if operator not in operadores_validos:
+                raise ValueError(f"Operador inválido: {operator}")
+
+            if operator == "IS NULL":
+                where_parts.append(f"{column} IS NULL")
+            else:
+                where_parts.append(f"{column} {operator} %s")
+                params.append(f"%{value}%" if operator == "LIKE" else value)
+
+        where = f" WHERE {' AND '.join(where_parts)}" if where_parts else ""
+        params = tuple(params)
+
+        success, total_row = self.cmd(f"SELECT COUNT(*) AS total FROM {table}{where}", params, fetch="one")
+        total = total_row["total"] if success and total_row else 0
+
+        command = f"SELECT * FROM {table}{where}"
+        if order_by:
+            self.check_names([order_by])
+            command += f" ORDER BY {order_by}"
+            if descending:
+                command += " DESC"
+        command += " LIMIT %s OFFSET %s"
+
+        offset = (max(page, 1) - 1) * self.PAGE_SIZE
+        success, rows = self.cmd(command, params + (self.PAGE_SIZE, offset), fetch="all")
+        return success, (rows if success else []), total
+
+    def search_page_data(self, table: str, columns: list, term: str, order_by: str = None, page: int = 1) -> tuple[bool, list, int]:
+        """Como search_data, mas paginado (ver select_page)."""
+        if not columns:
+            raise ValueError("Informe ao menos uma coluna para a busca.")
+
+        self.check_names([table] + columns)
+
+        conditions = " OR ".join([f"{column} LIKE %s" for column in columns])
+        base = f"FROM {table} WHERE {conditions}"
+        params = tuple([f"%{term}%"] * len(columns))
+
+        success, total_row = self.cmd(f"SELECT COUNT(*) AS total {base}", params, fetch="one")
+        total = total_row["total"] if success and total_row else 0
+
+        command = f"SELECT * {base}"
+        if order_by:
+            self.check_names([order_by])
+            command += f" ORDER BY {order_by}"
+        command += " LIMIT %s OFFSET %s"
+
+        offset = (max(page, 1) - 1) * self.PAGE_SIZE
+        success, rows = self.cmd(command, params + (self.PAGE_SIZE, offset), fetch="all")
+        return success, (rows if success else []), total

@@ -28,6 +28,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from database.database import Database
 from database.migrate import apply_schema
 from models.user import DataUser
 from models.itens import DataItem
@@ -197,6 +198,32 @@ def web_context(user: dict, **extra) -> dict:
     return {"usuario": {**user, "permissions": user_permissions(user)}, **extra}
 
 
+def total_paginas(total_registros: int) -> int:
+    """Quantas páginas de PAGE_SIZE registros (database/database.py::Database.PAGE_SIZE) cabem em total_registros."""
+    return max(1, -(-total_registros // Database.PAGE_SIZE))
+
+
+def pagina_links(atual: int, total: int) -> list:
+    """
+    Números de página pra exibir em templates/_paginacao.html. Com poucas
+    páginas mostra todas; com muitas, mostra só as extremidades e uma janela
+    em volta da página atual, com "..." no meio (ex: 1 ... 4 5 6 ... 20).
+    """
+    if total <= 7:
+        return list(range(1, total + 1))
+
+    paginas = sorted({p for p in (1, total, atual - 1, atual, atual + 1) if 1 <= p <= total})
+
+    resultado = []
+    anterior = None
+    for p in paginas:
+        if anterior is not None and p - anterior > 1:
+            resultado.append("...")
+        resultado.append(p)
+        anterior = p
+    return resultado
+
+
 def create_verification_from_photo(user: dict, item_id: str | None, filename: str | None, content: bytes) -> tuple[int, dict | str]:
     """
     Valida a extensão, salva a foto, roda o reconhecimento da IA e grava a
@@ -276,6 +303,8 @@ API.add_middleware(
 # servidos pelo próprio FastAPI, ao lado da API JSON (routes/) usada por outros sistemas.
 API.mount("/static", StaticFiles(directory=config.BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=config.BASE_DIR / "templates")
+templates.env.filters["status_pt"] = {"active": "Ativo", "disable": "Desativado", "deleted": "Apagado"}.get
+templates.env.globals["pagina_links"] = pagina_links
 
 
 @API.exception_handler(HTTPException)

@@ -1,11 +1,51 @@
 {% extends "base.html" %}
 {% block titulo %}Verificações{% endblock %}
 {% block conteudo %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h3 mb-0">Verificações</h1>
-        <a class="btn btn-primary" href="/app/verificacoes/nova"><i class="bi bi-camera"></i> Nova verificação</a>
+        <a class="btn btn-sm btn-primary" href="/app/verificacoes/nova"><i class="bi bi-camera"></i> Nova verificação</a>
     </div>
-    <p class="contador-resultados mb-3">{{ verifications|length }} verificação(ões) encontrada(s)</p>
+
+    <form method="get" action="/app/verificacoes" class="row g-2 mb-2">
+        {% if pode_ver_tudo %}
+        <div class="col-6 col-md-3">
+            <select class="form-select" name="user_id">
+                <option value="">Todos os usuários</option>
+                {% for usuario_opcao in usuarios_filtro %}
+                <option value="{{ usuario_opcao.id }}" {{ "selected" if filtro_user_id == usuario_opcao.id else "" }}>{{ usuario_opcao.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-6 col-md-3">
+            <select class="form-select" name="item_id">
+                <option value="">Todos os itens</option>
+                {% for item_opcao in itens_filtro %}
+                <option value="{{ item_opcao.id }}" {{ "selected" if filtro_item_id == item_opcao.id else "" }}>{{ item_opcao.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <select class="form-select" name="aprovado">
+                <option value="">Qualquer status</option>
+                <option value="pendente" {{ "selected" if filtro_aprovado == "pendente" else "" }}>Pendente</option>
+                <option value="aprovada" {{ "selected" if filtro_aprovado == "aprovada" else "" }}>Aprovada</option>
+                <option value="reprovada" {{ "selected" if filtro_aprovado == "reprovada" else "" }}>Reprovada</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <input type="date" class="form-control" name="data_de" value="{{ filtro_data_de }}" title="Enviada a partir de">
+        </div>
+        <div class="col-6 col-md-2">
+            <input type="date" class="form-control" name="data_ate" value="{{ filtro_data_ate }}" title="Enviada até">
+        </div>
+        <div class="col-12">
+            <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-search"></i> Filtrar</button>
+            <a class="btn btn-sm btn-link" href="/app/verificacoes">Limpar filtros</a>
+        </div>
+    </form>
+
+    <p class="contador-resultados mb-3">{{ total_registros }} verificação(ões) encontrada(s)</p>
 
     {% if verifications %}
     <div class="card">
@@ -48,6 +88,7 @@
         </table>
         </div>
     </div>
+    {% include "_paginacao.html" %}
     {% else %}
     <div class="estado-vazio">
         <i class="bi bi-camera"></i>

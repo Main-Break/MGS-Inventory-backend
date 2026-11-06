@@ -116,6 +116,12 @@ class DataItem(Database):
             return self.list_all()
         return self.search_data(self.TABLE, ["name", "label", "sku", "barcode"], term, order_by="name")
 
+    def search_page(self, term: str | None, page: int = 1) -> tuple[bool, list, int]:
+        """Como search, mas devolve só uma página (ver database/database.py::select_page)."""
+        if not term:
+            return self.select_page(self.TABLE, order_by="name", page=page)
+        return self.search_page_data(self.TABLE, ["name", "label", "sku", "barcode"], term, order_by="name", page=page)
+
     def import_row(self, data: dict) -> tuple[bool, dict | str]:
         """
         Cria ou atualiza um item a partir de uma linha de planilha (ver

@@ -13,6 +13,7 @@ from core import (
     itens,
     require_permission,
     templates,
+    total_paginas,
     users,
     verifications,
     web_context,
@@ -45,15 +46,37 @@ def lookup_tables() -> tuple[dict, dict]:
 
 
 @router.get("")
-def list_verifications(request: Request, user: dict = Depends(current_user)):
-    if has_permission(user, "verifications.view_all"):
-        _, rows = verifications.list_all()
-    else:
-        _, rows = verifications.list_by_user(user["id"])
+def list_verifications(
+    request: Request,
+    item_id: str = "",
+    aprovado: str = "",
+    data_de: str = "",
+    data_ate: str = "",
+    user_id: str = "",
+    page: int = 1,
+    user: dict = Depends(current_user),
+):
+    pode_ver_tudo = has_permission(user, "verifications.view_all")
+    # Quem não tem a permissão de ver tudo só pode ver as próprias, não importa o filtro pedido na URL.
+    filtro_usuario = (user_id or None) if pode_ver_tudo else user["id"]
+
+    _, rows, total = verifications.search_page(
+        page=page,
+        user_id=filtro_usuario,
+        item_id=item_id or None,
+        status=aprovado or None,
+        data_de=data_de or None,
+        data_ate=data_ate or None,
+    )
 
     users_by_id, itens_by_id = lookup_tables()
     result = [build_verification(row, users_by_id, itens_by_id) for row in rows]
-    return templates.TemplateResponse(request, "verifications/list.html", web_context(user, verifications=result))
+
+    return templates.TemplateResponse(request, "verifications/list.html", web_context(
+        user, verifications=result, pagina_atual=page, total_paginas=total_paginas(total), total_registros=total,
+        pode_ver_tudo=pode_ver_tudo, usuarios_filtro=list(users_by_id.values()), itens_filtro=list(itens_by_id.values()),
+        filtro_item_id=item_id, filtro_aprovado=aprovado, filtro_data_de=data_de, filtro_data_ate=data_ate, filtro_user_id=user_id,
+    ))
 
 
 @router.get("/foto/{filename}")
