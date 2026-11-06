@@ -82,10 +82,13 @@ def list_verifications(
 @router.get("/foto/{filename}")
 def get_photo(filename: str, _user: dict = Depends(current_user)) -> FileResponse:
     # filename sempre vem do próprio banco (gerado pela API no upload), nunca de entrada livre do navegador.
+    # Cache-Control: no-store pq essa rota exige login - um proxy/CDN na frente (ex: Cloudflare)
+    # não pode guardar a foto de um usuário e servir pra outro, nem guardar um 404 antigo
+    # de antes da foto existir.
     photo_path = config.UPLOAD_DIR / filename
     if not photo_path.is_file():
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Foto não encontrada.")
-    return FileResponse(photo_path)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Foto não encontrada.", headers={"Cache-Control": "private, no-store"})
+    return FileResponse(photo_path, headers={"Cache-Control": "private, no-store"})
 
 
 @router.get("/nova")

@@ -318,9 +318,9 @@ def web_exception_handler(request: Request, error: HTTPException):
     if request.url.path.startswith("/app"):
         if error.status_code == status.HTTP_401_UNAUTHORIZED:
             return RedirectResponse(f"/app/login?next={request.url.path}", status_code=status.HTTP_303_SEE_OTHER)
-        return templates.TemplateResponse(request, "erro.html", {"mensagem": error.detail}, status_code=error.status_code)
+        return templates.TemplateResponse(request, "erro.html", {"mensagem": error.detail}, status_code=error.status_code, headers=error.headers)
 
-    return JSONResponse({"detail": error.detail}, status_code=error.status_code)
+    return JSONResponse({"detail": error.detail}, status_code=error.status_code, headers=error.headers)
 
 
 @API.get("/health", tags=["health"])
